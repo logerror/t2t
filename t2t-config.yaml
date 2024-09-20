@@ -1,0 +1,13 @@
+server:
+  port: 9002
+  host: localhost
+  scheme:
+    http: http
+    ws: ws
+
+version:
+  agent: 1.0.0
+  server: 1.0.0
+  client: 1.0.0
+
+helpUrl: https://github.com/logerror/easylog/blob/master/README.md
