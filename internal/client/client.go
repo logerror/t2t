@@ -11,7 +11,6 @@ import (
 
 	"github.com/logerror/t2t/pkg/util/printutil"
 
-	"github.com/logerror/t2t/pkg/constants/svcconstants"
 	"github.com/logerror/t2t/pkg/util/versionutil"
 	"golang.org/x/crypto/ssh/terminal"
 	"golang.org/x/net/websocket"
@@ -38,8 +37,8 @@ func main() {
 	hostTag := os.Args[1]
 	clientId := os.Args[2]
 
-	url := fmt.Sprintf("%s://%s/attach/%s/%s", svcconstants.AgentServerWsSchema, svcconstants.AgentServerHost, hostTag, clientId)
-	origin := fmt.Sprintf("%s://%s/", svcconstants.AgentServerHttpSchema, svcconstants.AgentServerHost)
+	url := fmt.Sprintf("%s://%s/attach/%s/%s", config.Configuration.Server.Schema.Ws, config.Configuration.Client.Host, hostTag, clientId)
+	origin := fmt.Sprintf("%s://%s/", config.Configuration.Server.Schema.Http, config.Configuration.Client.Host)
 	wsConfig, _ := websocket.NewConfig(url, origin)
 	wsConfig.Header.Set("X-T2T-Client-User", u.Username)
 	ws, err := websocket.DialConfig(wsConfig)
@@ -111,7 +110,7 @@ func printHelpInfo() {
 		fmt.Printf("Error getting latest version: %v\n", err)
 	}
 
-	helpUrl := fmt.Sprintf("%s://%s", svcconstants.AgentServerHttpSchema, svcconstants.AgentServerHost)
+	helpUrl := fmt.Sprintf("%s://%s", config.Configuration.Server.Schema.Http, config.Configuration.Client.Host)
 	fmt.Printf("Current Version: %s\n", currentVersion)
 	fmt.Printf("Latest Version: %s\n", latestVersion.Agent)
 	if latestVersion != nil && currentVersion != latestVersion.Client {

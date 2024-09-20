@@ -17,7 +17,6 @@ import (
 	"github.com/logerror/t2t/pkg/util/printutil"
 
 	"github.com/creack/pty"
-	"github.com/logerror/t2t/pkg/constants/svcconstants"
 	"github.com/logerror/t2t/pkg/util/versionutil"
 	"golang.org/x/net/websocket"
 )
@@ -26,8 +25,8 @@ func main() {
 	config.InitConfig()
 	printHelpInfo()
 	hostTag, clientId := getHostTagAndClientId()
-	url := fmt.Sprintf("%s://%s/ws/%s/%s", svcconstants.AgentServerWsSchema, svcconstants.AgentServerHost, hostTag, clientId)
-	origin := fmt.Sprintf("%s://%s/", svcconstants.AgentServerHttpSchema, svcconstants.AgentServerHost)
+	url := fmt.Sprintf("%s://%s/ws/%s/%s", config.Configuration.Server.Schema.Ws, config.Configuration.Agent.Host, hostTag, clientId)
+	origin := fmt.Sprintf("%s://%s/", config.Configuration.Server.Schema.Http, config.Configuration.Agent.Host)
 	wsConfig, _ := websocket.NewConfig(url, origin)
 	wsConfig.Header.Set("X-T2T-Agent-Token", "ba8Eg6GQVNpRv6d0")
 	ws, err := websocket.DialConfig(wsConfig)
@@ -134,7 +133,7 @@ func printHelpInfo() {
 		//os.Exit(1)
 	}
 
-	helpUrl := fmt.Sprintf("%s://%s", svcconstants.AgentServerHttpSchema, svcconstants.AgentServerHost)
+	helpUrl := fmt.Sprintf("%s://%s", config.Configuration.Server.Schema.Http, config.Configuration.Agent.Host)
 	fmt.Printf("Current Version: %s\n", currentVersion)
 	fmt.Printf("Latest Version: %s\n", latestVersion.Agent)
 	if latestVersion != nil && currentVersion != latestVersion.Agent {
@@ -146,7 +145,7 @@ func printHelpInfo() {
 }
 
 func cleanUp(hostTag, clientId string) {
-	url := fmt.Sprintf("%s://%s/agent/%s/%s", svcconstants.AgentServerHttpSchema, svcconstants.AgentServerHost, hostTag, clientId)
+	url := fmt.Sprintf("%s://%s/agent/%s/%s", config.Configuration.Server.Schema.Http, config.Configuration.Agent.Host, hostTag, clientId)
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
 		log.Fatalf("创建请求失败: %v", err)

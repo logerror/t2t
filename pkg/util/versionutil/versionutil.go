@@ -3,15 +3,15 @@ package versionutil
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/logerror/t2t/pkg/config"
 	"io"
 	"net/http"
 
-	"github.com/logerror/t2t/pkg/constants/svcconstants"
 	"github.com/logerror/t2t/pkg/data/version"
 )
 
 func GetLatestVersion() (*version.Version, error) {
-	resp, err := http.Get(fmt.Sprintf("%s://%s/version", svcconstants.AgentServerHttpSchema, svcconstants.AgentServerHost))
+	resp, err := http.Get(fmt.Sprintf("%s://%s/version", config.Configuration.Server.Schema.Http, config.Configuration.Agent.Host))
 	if err != nil {
 		return nil, err
 	}

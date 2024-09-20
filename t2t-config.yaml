@@ -1,9 +1,14 @@
 server:
-  port: 9002
   host: localhost
-  scheme:
+  port: 9002
+  schema:
     http: http
     ws: ws
+
+client:
+  host: localhost:9002
+agent:
+  host: localhost:9002
 
 version:
   agent: 1.0.0
