@@ -11,11 +11,9 @@ const (
 var Configuration *Config
 
 type Config struct {
-	Server  Server  `json:"server" yaml:"server" mapstructure:"server"`
-	Agent   Agent   `json:"agent" yaml:"agent" mapstructure:"agent"`
-	Client  Client  `json:"client" yaml:"client" mapstructure:"client"`
-	Version Version `json:"version" yaml:"version" mapstructure:"version"`
-	HelpUrl string  `json:"helpUrl" yaml:"helpUrl" mapstructure:"helpUrl"`
+	Server Server `json:"server" yaml:"server" mapstructure:"server"`
+	//Version Version `json:"version" yaml:"version" mapstructure:"version"`
+	HelpUrl string `json:"helpUrl" yaml:"helpUrl" mapstructure:"helpUrl"`
 }
 
 type Version struct {
@@ -25,30 +23,13 @@ type Version struct {
 }
 
 type Server struct {
-	Port   int    `json:"port" yaml:"port" mapstructure:"port"`
-	Host   string `json:"host" yaml:"host" mapstructure:"host"`
-	Schema Schema `json:"schema" yaml:"schema" mapstructure:"schema"`
-}
-
-type Agent struct {
-	Port int    `json:"port" yaml:"port" mapstructure:"port"`
-	Host string `json:"host" yaml:"host" mapstructure:"host"`
-}
-
-type Client struct {
-	Port int    `json:"port" yaml:"port" mapstructure:"port"`
-	Host string `json:"host" yaml:"host" mapstructure:"host"`
-}
-
-type Schema struct {
-	Http string `json:"http" yaml:"http" mapstructure:"http"`
-	Ws   string `json:"ws" yaml:"ws" mapstructure:"ws"`
+	Port int `json:"port" yaml:"port" mapstructure:"port"`
 }
 
 func InitConfig() {
-	viper.SetConfigName("t2t-config")
+	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	//viper.AddConfigPath(PathUserHome)
+	//viper.AddConfigPath(ConfigPathUserHome)
 	viper.AddConfigPath(PathUserHome)
 	viper.AddConfigPath(".")
 	viper.AutomaticEnv()

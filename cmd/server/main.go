@@ -7,14 +7,15 @@ import (
 	"github.com/logerror/easylog/pkg/option"
 	"github.com/logerror/t2t/internal/server/http"
 	"github.com/logerror/t2t/pkg/config"
-	"github.com/logerror/t2t/pkg/util/printutil"
+	"github.com/logerror/t2t/pkg/util/commonutil"
 	"github.com/logerror/t2t/pkg/util/signalutil"
 	"github.com/logerror/t2t/pkg/util/versionutil"
 	"go.uber.org/zap"
 )
 
+// 2 27 2 27 79 65
 func main() {
-	printutil.PrintLogo()
+	commonutil.PrintAgentFlag()
 	config.InitConfig()
 	easylog.InitGlobalLogger(
 		option.WithLogLevel("info"),

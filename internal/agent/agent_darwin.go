@@ -17,12 +17,13 @@ import (
 	"syscall"
 	"time"
 
+	"golang.org/x/sys/unix"
+
 	"github.com/creack/pty"
 	"github.com/gorilla/websocket"
 	"github.com/logerror/t2t/pkg/constants/svcconstants"
 	"github.com/logerror/t2t/pkg/util/commonutil"
 	"github.com/logerror/t2t/pkg/util/versionutil"
-	"golang.org/x/sys/unix"
 )
 
 // 定义重连相关常量
@@ -173,97 +174,9 @@ func (a *Agent) setupShell() error {
 	return nil
 }
 
-// 检查更新
-func checkForUpdates() (bool, string) {
-	currentVersion := versionutil.GetCurrentAgentVersion()
-	latestVersion, err := versionutil.GetLatestVersion()
-	if err != nil {
-		log.Printf("获取最新版本失败: %v", err)
-		return false, ""
-	}
-
-	if latestVersion.Agent != currentVersion {
-		return true, latestVersion.Agent
-	}
-	return false, ""
-}
-
-// 下载更新
-func downloadUpdate(version string) error {
-	url := fmt.Sprintf("%s://%s/public/agent/t2t-agent-%s-%s-%s", svcconstants.AgentServerHttpSchema, svcconstants.AgentServerHost, runtime.GOOS, runtime.GOARCH, version)
-	resp, err := http.Get(url)
-	if err != nil {
-		return fmt.Errorf("下载更新失败: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("更新服务器返回错误: %s", resp.Status)
-	}
-
-	out, err := os.Create("dr-agent-updated")
-	if err != nil {
-		return fmt.Errorf("创建更新文件失败: %v", err)
-	}
-	defer out.Close()
-
-	_, err = io.Copy(out, resp.Body)
-	if err != nil {
-		return fmt.Errorf("写入更新文件失败: %v", err)
-	}
-
-	// 设置下载的文件为可执行文件
-	if err := os.Chmod("dr-agent-updated", 0755); err != nil {
-		return fmt.Errorf("设置文件权限失败: %v", err)
-	}
-
-	return nil
-}
-
-// 替换当前执行文件并重启
-func replaceCurrentExecutable() error {
-	currentPath, err := os.Executable()
-	if err != nil {
-		return fmt.Errorf("获取当前执行文件路径失败: %v", err)
-	}
-
-	err = os.Rename("dr-agent-updated", currentPath)
-	if err != nil {
-		return fmt.Errorf("替换当前执行文件失败: %v", err)
-	}
-
-	// 重启程序
-	cmd := exec.Command(currentPath)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err = cmd.Start()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // 启动 Agent
 func (a *Agent) Start() error {
-	// 检查更新
-	//needsUpdate, newVersion := checkForUpdates()
-	//if needsUpdate {
-	//	log.Printf("发现新版本: %s，开始下载更新...", newVersion)
-	//	if err := downloadUpdate(newVersion); err != nil {
-	//		log.Printf("更新下载失败: %v", err)
-	//		return err
-	//	}
-	//	log.Printf("更新下载完成，替换当前执行文件...")
-	//	if err := replaceCurrentExecutable(); err != nil {
-	//		log.Printf("更新替换失败: %v", err)
-	//		return err
-	//	}
-	//	log.Printf("更新完成，请重启程序以应用新版本.")
-	//	os.Exit(0) // 退出以便用户手动重启
-	//}
-
-	// 继续启动逻辑...
+	// 初始连接
 	if err := a.connect(); err != nil {
 		return err
 	}
@@ -335,7 +248,7 @@ func (a *Agent) handlePtyToWs() {
 }
 
 func (a *Agent) setupPtyAttr(ptmx *os.File) error {
-	termios, err := unix.IoctlGetTermios(int(ptmx.Fd()), unix.TCGETS)
+	termios, err := unix.IoctlGetTermios(int(ptmx.Fd()), unix.TIOCGETA)
 	if err != nil {
 		return err
 	}
@@ -356,7 +269,7 @@ func (a *Agent) setupPtyAttr(ptmx *os.File) error {
 	termios.Cc[unix.VMIN] = 1
 	termios.Cc[unix.VTIME] = 0
 
-	return unix.IoctlSetTermios(int(ptmx.Fd()), unix.TCSETS, termios)
+	return unix.IoctlSetTermios(int(ptmx.Fd()), unix.TIOCSETA, termios)
 }
 
 // 处理从 WebSocket 到 PTY 的数据转发
@@ -388,8 +301,6 @@ func (a *Agent) handleWsToPty() {
 				}
 				continue
 			}
-			fmt.Printf("Received input type : %d\n", messageType)
-			fmt.Printf("Received input data : %v\n", data)
 
 			// 只处理文本和二进制消息
 			if messageType != websocket.TextMessage && messageType != websocket.BinaryMessage {
@@ -401,9 +312,7 @@ func (a *Agent) handleWsToPty() {
 			}
 
 			// 检查是否是终端大小变化消息
-			if messageType == websocket.TextMessage && len(data) > 0 &&
-				strings.HasPrefix(string(data), "\x1b[8;") &&
-				strings.HasSuffix(string(data), "t") {
+			if messageType == websocket.TextMessage && len(data) > 0 && data[0] == '\x1b' {
 				a.handleWindowResize(data)
 				continue
 			}
@@ -476,12 +385,21 @@ func main() {
 }
 
 func getHostTagAndClientId() (string, string) {
-	hostTag := "default"
-	hostName, err := os.Hostname()
+	carIDPath := "/tmp/dem/logs/dem/CAR_ID"
+	hostTag, err := readFile(carIDPath)
 	if err != nil {
-		fmt.Printf("Error getting hostname: %v\n", err)
-	} else {
-		hostTag = hostName
+		// 如果文件读取失败，尝试从环境变量获取
+		hostTag = os.Getenv("CAR_ID")
+		if hostTag == "" {
+			// 如果环境变量也为空，则使用主机名或默认值
+			hostName, err := os.Hostname()
+			if err != nil {
+				fmt.Printf("Error getting hostname: %v\n", err)
+				hostTag = "default"
+			} else {
+				hostTag = hostName
+			}
+		}
 	}
 
 	rand.Seed(time.Now().UnixNano())

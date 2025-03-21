@@ -94,7 +94,7 @@ func (c *Client) setupTerminal() error {
 	}
 	c.oldState = oldState
 
-	termios, err := unix.IoctlGetTermios(fd, unix.TCGETS)
+	termios, err := unix.IoctlGetTermios(fd, unix.TIOCGETA)
 	if err != nil {
 		return fmt.Errorf("获取终端属性失败: %v", err)
 	}
@@ -112,7 +112,7 @@ func (c *Client) setupTerminal() error {
 	termios.Cc[unix.VMIN] = 1
 	termios.Cc[unix.VTIME] = 0
 
-	if err := unix.IoctlSetTermios(fd, unix.TCSETS, termios); err != nil {
+	if err := unix.IoctlSetTermios(fd, unix.TIOCSETA, termios); err != nil {
 		return fmt.Errorf("设置终端属性失败: %v", err)
 	}
 

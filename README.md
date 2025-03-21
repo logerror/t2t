@@ -37,19 +37,23 @@ The basic flow:
 - Golang (for building the agent, server, and client)
 
 ### Steps
+1. Build the server, agent, and client:
+   ```
+   ./build.sh
+   ```
 
-1. Run the server:
+2. Run the server:
    ```
-   ./t2t-server
+   ./build/t2t-server
    ```
 
-2. Run the agent on each remote host:
+3. Run the agent on each remote host:
    ```
-   ./t2t-agent  will output the host info and code to connect to the server.
+   ./build/t2t-agent  will output the host info and code to connect to the server.
    ```
-3. Connect to a remote host using the client:
+4. Connect to a remote host using the client or web terminal (localhost:9002):
    ```
-   ./t2t-client <Host Info>  <Code> // <Host Info> and  <Code>  from step 2
+   ./build/t2t-client <Host Info>  <Code> // <Host Info> and  <Code>  from step 2
    ```
 ## Usage
 

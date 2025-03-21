@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>DR Web Terminal</title>
+    <link rel="stylesheet" href="/static/css/xterm.min.css">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            background: #1e1e1e;
+            overflow: hidden;
+        }
+        #terminal-container {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div id="terminal-container"></div>
+<!--xterm@5.3.0-->
+<script src="/static/js/xterm.min.js"></script>
+<!--xterm-addon-fit@0.8.0-->
+<script src="/static/js/xterm-addon-fit.min.js"></script>
+<!--xterm-addon-attach@0.8.0-->
+<script src="/static/js/xterm-addon-attach.min.js"></script>
+<script src="/static/js/terminal.js"></script>
+</body>
+</html>

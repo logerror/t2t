@@ -4,11 +4,14 @@ go 1.22
 
 require (
 	github.com/creack/pty v1.1.21
+	github.com/gorilla/websocket v1.5.3
 	github.com/logerror/easylog v1.0.1
 	github.com/spf13/viper v1.19.0
 	go.uber.org/zap v1.26.0
 	golang.org/x/crypto v0.25.0
 	golang.org/x/net v0.25.0
+	golang.org/x/sys v0.22.0
+	golang.org/x/term v0.22.0
 )
 
 require (
@@ -28,8 +31,6 @@ require (
 	go.opentelemetry.io/otel/trace v1.24.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
-	golang.org/x/sys v0.22.0 // indirect
-	golang.org/x/term v0.22.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
