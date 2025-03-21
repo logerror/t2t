@@ -1,4 +1,4 @@
-# t2t - Terminal to Terminal, access to remote machines by Terminal
+# t2t - Terminal to Terminal, access to remote machines by Terminal or Web Terminal (Browser)
    
 ```
 ████████╗██████╗ ████████╗
