@@ -440,10 +440,6 @@ func HandleAttachV2(w http.ResponseWriter, r *http.Request) {
 func HandleAttach(wsAttach *xwebsocket.Conn) {
 	remoteAddr := wsAttach.Request().RemoteAddr
 	clientUser := wsAttach.Request().Header.Get(svcconstants.XWsT2TClientUserHeader)
-	// adjust old header
-	if clientUser == "" {
-		clientUser = wsAttach.Request().Header.Get("X-DR-Client-User")
-	}
 	clientVersion := wsAttach.Request().Header.Get(svcconstants.XWsT2TClientVersionHeader)
 	urlPath := wsAttach.Request().URL.Path
 

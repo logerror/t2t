@@ -12,6 +12,8 @@ var Configuration *Config
 
 type Config struct {
 	Server Server `json:"server" yaml:"server" mapstructure:"server"`
+	Agent  Agent  `json:"agent" yaml:"agent" mapstructure:"agent"`
+	Client Client `json:"client" yaml:"client" mapstructure:"client"`
 	//Version Version `json:"version" yaml:"version" mapstructure:"version"`
 	HelpUrl string `json:"helpUrl" yaml:"helpUrl" mapstructure:"helpUrl"`
 }
@@ -22,8 +24,25 @@ type Version struct {
 	Server string `json:"server" yaml:"server" mapstructure:"server"`
 }
 
+type Agent struct {
+	Port int    `json:"port" yaml:"port" mapstructure:"port"`
+	Host string `json:"host" yaml:"host" mapstructure:"host"`
+}
+
+type Client struct {
+	Port int    `json:"port" yaml:"port" mapstructure:"port"`
+	Host string `json:"host" yaml:"host" mapstructure:"host"`
+}
+
 type Server struct {
-	Port int `json:"port" yaml:"port" mapstructure:"port"`
+	Port   int    `json:"port" yaml:"port" mapstructure:"port"`
+	Host   string `json:"host" yaml:"host" mapstructure:"host"`
+	Schema Schema `json:"schema" yaml:"schema" mapstructure:"schema"`
+}
+
+type Schema struct {
+	Http string `json:"http" yaml:"http" mapstructure:"http"`
+	Ws   string `json:"ws" yaml:"ws" mapstructure:"ws"`
 }
 
 func InitConfig() {

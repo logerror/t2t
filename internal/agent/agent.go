@@ -201,7 +201,7 @@ func downloadUpdate(version string) error {
 		return fmt.Errorf("更新服务器返回错误: %s", resp.Status)
 	}
 
-	out, err := os.Create("dr-agent-updated")
+	out, err := os.Create("t2t-agent-updated")
 	if err != nil {
 		return fmt.Errorf("创建更新文件失败: %v", err)
 	}
@@ -213,7 +213,7 @@ func downloadUpdate(version string) error {
 	}
 
 	// 设置下载的文件为可执行文件
-	if err := os.Chmod("dr-agent-updated", 0755); err != nil {
+	if err := os.Chmod("t2t-agent-updated", 0755); err != nil {
 		return fmt.Errorf("设置文件权限失败: %v", err)
 	}
 
@@ -227,7 +227,7 @@ func replaceCurrentExecutable() error {
 		return fmt.Errorf("获取当前执行文件路径失败: %v", err)
 	}
 
-	err = os.Rename("dr-agent-updated", currentPath)
+	err = os.Rename("t2t-agent-updated", currentPath)
 	if err != nil {
 		return fmt.Errorf("替换当前执行文件失败: %v", err)
 	}
