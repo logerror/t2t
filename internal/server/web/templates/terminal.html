@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>T2T Web Terminal</title>
     <link rel="stylesheet" href="/static/css/xterm.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
     <style>
         html, body {
             margin: 0;
@@ -13,15 +14,21 @@
             background: #1e1e1e;
             overflow: hidden;
         }
-        #terminal-container {
-            height: 100%;
+        #terminal-t2t {
+            height: 99%;
             width: 100%;
         }
     </style>
 </head>
 <body>
 
-<div id="terminal-container"></div>
+<div class="terminal-container">
+    <div class="terminal-header">
+        <span class="host-info">For Your Better Terminal (T2T)</span>
+    </div>
+    <div id="terminal-t2t"></div>
+</div>
+
 <!--xterm@5.3.0-->
 <script src="/static/js/xterm.min.js"></script>
 <!--xterm-addon-fit@0.8.0-->
