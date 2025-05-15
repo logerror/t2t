@@ -1,4 +1,4 @@
-package main
+package client
 
 import (
 	"bytes"
@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/signal"
 	"os/user"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -33,8 +32,8 @@ type Client struct {
 	oldState    *terminal.State
 	exitChan    chan struct{}
 	reconnectCh chan struct{}
-	wsLock      sync.Mutex  // 添加锁来保护 WebSocket 操作
-	isConnected atomic.Bool // 添加连接状态标志
+	wsLock      sync.Mutex
+	isConnected atomic.Bool
 }
 
 func NewClient(hostTag, clientId string) *Client {
@@ -105,7 +104,6 @@ func (c *Client) setupTerminal() error {
 	termios.Oflag |= unix.OPOST  // 启用输出处理
 	termios.Oflag |= unix.ONLRET // 在回车时不输出回车符
 
-	// 设置自动回绕
 	termios.Lflag |= unix.ECHOE // 擦除字符时擦除
 	termios.Lflag |= unix.ECHOK // 删除行时输出换行
 
@@ -199,9 +197,7 @@ func (c *Client) handleSpecialCommand(data []byte) bool {
 	return false
 }
 
-// 处理数据转发
 func (c *Client) handleDataTransfer() {
-	// 创建一个 WaitGroup 来等待所有 goroutine 完成
 	var wg sync.WaitGroup
 	wg.Add(2)
 
@@ -304,14 +300,12 @@ func (c *Client) handleDataTransfer() {
 		}
 	}()
 
-	// 等待所有 goroutine 完成
 	go func() {
 		wg.Wait()
 		close(c.exitChan)
 	}()
 }
 
-// 添加安全的关闭方法
 func (c *Client) closeWs() {
 	c.wsLock.Lock()
 	defer c.wsLock.Unlock()
@@ -328,7 +322,6 @@ func (c *Client) closeWs() {
 	}
 }
 
-// 启动客户端
 func (c *Client) Start() error {
 	u, err := user.Current()
 	if err != nil {
@@ -360,14 +353,6 @@ func (c *Client) Start() error {
 	// 处理数据转发
 	c.handleDataTransfer()
 
-	// 重试计数器和状态跟踪
-	var (
-		retryCount    int
-		maxRetries    = 3
-		lastErrorTime time.Time
-		errorWindow   = 30 * time.Second // 错误窗口期
-	)
-
 	// 等待退出或重连
 	for {
 		select {
@@ -375,49 +360,7 @@ func (c *Client) Start() error {
 			c.closeWs()
 			return nil
 		case <-c.reconnectCh:
-			// 检查是否在错误窗口期内
-			if time.Since(lastErrorTime) > errorWindow {
-				// 超过窗口期，重置计数
-				retryCount = 0
-			}
-			lastErrorTime = time.Now()
-
-			// 增加重试计数
-			retryCount++
-			if retryCount > maxRetries {
-				fmt.Printf("\r\n[错误] 重试次数已达上限 (%d次), 程序退出\r\n", maxRetries)
-				c.closeWs()
-				close(c.exitChan)
-				return fmt.Errorf("maximum retry attempts (%d) exceeded", maxRetries)
-			}
-
-			fmt.Printf("\r\n[提示] 正在重新连接... (尝试 %d/%d)\r\n", retryCount, maxRetries)
-
-			if err = c.connect(); err != nil {
-				fmt.Printf("\r\n[错误] 重连失败: %v\r\n", err)
-				if retryCount >= maxRetries {
-					continue // 触发最大重试检查
-				}
-				// 使用指数退避策略
-				backoffDuration := time.Duration(1<<uint(retryCount)) * time.Second
-				fmt.Printf("\r\n[提示] %d 秒后进行下一次重试...\r\n", 1<<uint(retryCount))
-				time.Sleep(backoffDuration)
-				c.reconnectCh <- struct{}{} // 触发下一次重试
-			} else {
-				// 检查连接是否真正可用
-				if err = c.checkConnection(); err != nil {
-					fmt.Printf("\r\n[错误] 连接检查失败: %v\r\n", err)
-					c.closeWs()
-					if retryCount >= maxRetries {
-						continue // 触发最大重试检查
-					}
-					c.reconnectCh <- struct{}{} // 触发下一次重试
-					continue
-				}
-
-				fmt.Printf("\r\n[提示] 重连成功\r\n")
-				c.handleDataTransfer()
-			}
+			return fmt.Errorf("exit and reconnect with cmd: t2t %s %s", c.hostTag, c.clientId)
 		}
 	}
 }
@@ -462,45 +405,17 @@ func printHelpInfo() {
 	latestVersion, err := versionutil.GetLatestVersion()
 	if err != nil {
 		fmt.Printf("Error getting latest version: %v\n", err)
-		//os.Exit(1)
 	}
 
 	helpUrl := fmt.Sprintf("%s://%s", svcconstants.AgentServerHttpSchema, svcconstants.AgentServerHost)
 	fmt.Printf("当前版本: %s\n", currentVersion)
-	fmt.Printf("最新版本: %s\n", latestVersion.Agent)
-	if latestVersion != nil && currentVersion != latestVersion.Client {
+	fmt.Printf("最新版本: %s\n", latestVersion.Client)
+	if currentVersion != latestVersion.Client {
 		fmt.Printf("建议更新到最新版本后再运行此程序。参考: %s \n", helpUrl)
 	} else {
 		fmt.Printf("使用说明: %s \n", helpUrl)
 	}
 	fmt.Printf("#################################################################\n")
-}
-
-func main() {
-	if len(os.Args) < 3 {
-		fmt.Printf("Usage: %s <hostTag> <clientId>\n", os.Args[0])
-		os.Exit(1)
-	}
-	printHelpInfo()
-	hostTag := os.Args[1]
-	clientId := os.Args[2]
-
-	agentVersion, err := versionutil.GetAgentVersion(hostTag, clientId)
-	if err != nil {
-		fmt.Printf("Error getting agent version: %v\n", err)
-		os.Exit(1)
-	}
-
-	if strings.HasPrefix(agentVersion, "2") {
-		client := NewClient(hostTag, clientId)
-		if err := client.Start(); err != nil {
-			fmt.Printf("Error: %v\n", err)
-			os.Exit(1)
-		}
-	} else {
-		v1Attach(hostTag, clientId)
-	}
-
 }
 
 func v1Attach(hostTag, clientId string) {
