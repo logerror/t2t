@@ -21,10 +21,6 @@ var listCmd = &cobra.Command{
 	},
 }
 
-func init() {
-	rootCmd.AddCommand(listCmd)
-}
-
 func listConnections() {
 	// 获取当前用户信息
 	currentUser, err := user.Current()
@@ -33,7 +29,6 @@ func listConnections() {
 		return
 	}
 
-	// 创建请求
 	url := fmt.Sprintf("%s://%s/agents",
 		svcconstants.AgentServerHttpSchema,
 		svcconstants.AgentServerHost)
@@ -47,6 +42,11 @@ func listConnections() {
 	// 添加请求头
 	req.Header.Set(svcconstants.XWsT2TClientUserHeader, currentUser.Username)
 	req.Header.Set(svcconstants.XWsT2TClientVersionHeader, versionutil.GetCurrentClientVersion())
+	// 新增：带上token
+	//token, _ := authutil.GetToken()
+	//if token != "" {
+	//	req.Header.Set("Authorization", token)
+	//}
 
 	// 发送请求
 	client := &http.Client{}
@@ -76,4 +76,8 @@ func listConnections() {
 	}
 
 	table.Render()
+}
+
+func init() {
+	rootCmd.AddCommand(listCmd)
 }

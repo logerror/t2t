@@ -11,7 +11,7 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "version of t2t",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("t2t version:", versionutil.GetCurrentClientVersion())
+		fmt.Println("t2t-client version:", versionutil.GetCurrentClientVersion())
 	},
 }
 

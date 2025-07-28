@@ -1,65 +1,74 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>T2T Remote Agents</title>
+    <title>t2t</title>
     <link rel="icon" href="/static/image/favicon.ico" type="image/x-icon">
     <link href="/static/css/index.css" rel="stylesheet">
     <link href="/static/css/fontgoogle.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="header-content">
-                <h1>T2T Remote Agents</h1>
-                <div class="stats">
-                    <div class="stat-item">
-                        <span class="stat-label">Total Agents</span>
-                        <span class="stat-value" id="totalAgents">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Active Users</span>
-                        <span class="stat-value" id="activeUsers">0</span>
+    <!-- 粒子背景 -->
+    <div class="particles-bg" id="particlesBg"></div>
+    
+    <div class="floating-quick-links">
+    </div>
+    <div class="main-bg">
+        <div class="main-card">
+            <header>
+                <div class="header-content">
+                    <h1>Terminal 2 Terminal</h1>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Total Agents</span>
+                            <span class="stat-value" id="totalAgents">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Active Users</span>
+                            <span class="stat-value" id="activeUsers">0</span>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="refresh-container">
-                <button id="refreshBtn" class="refresh-btn">
-                    <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    <span>Refresh</span>
-                </button>
-                <a href="https://rqk9rsooi4.feishu.cn/wiki/ROWjwhHtbiQWXdk5lQ8crg2hngg?from=from_copylink" target="_blank" class="help-link">
-                    <svg class="help-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M12 18h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    <span>帮助文档</span>
-                </a>
-                <span id="lastUpdate"></span>
-            </div>
-        </header>
-        <main>
-            <div class="agents-list">
-                <table id="agentsList">
-                    <thead>
-                        <tr>
-                            <th>Host信息</th>
-                            <th>授权码</th>
-                            <th>Agent Arch</th>
-                            <th>Agent版本</th>
-                            <th>Client版本</th>
-                            <th>当前远程用户</th>
-                            <th>连接创建时间</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Agents will be populated here -->
-                    </tbody>
-                </table>
-            </div>
-        </main>
+                <div class="refresh-container">
+                    <input type="text" id="agentSearch" placeholder="搜索 Host、用户、授权码等..." class="search-input">
+                    <button id="refreshBtn" class="refresh-btn">
+                        <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>刷新</span>
+                    </button>
+                    <a href="https://rqk9rsooi4.feishu.cn/wiki/ROWjwhHtbiQWXdk5lQ8crg2hngg?from=from_copylink" target="_blank" class="help-link">
+                        <svg class="help-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M12 18h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>帮助文档</span>
+                    </a>
+                    <span id="lastUpdate"></span>
+                </div>
+            </header>
+            <main>
+                <div class="agents-list">
+                    <table id="agentsList">
+                        <thead>
+                            <tr>
+                                <th>状态</th>
+                                <th>Host信息</th>
+                                <th>授权码</th>
+                                <th>Agent Arch</th>
+                                <th>Agent版本</th>
+                                <th>Client版本</th>
+                                <th>当前远程用户</th>
+                                <th>连接创建时间</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Agents will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+        </div>
     </div>
-    <script src="/static/js/index.js"></script>
+<script src="/static/js/index.js"></script>
 </body>
 </html>

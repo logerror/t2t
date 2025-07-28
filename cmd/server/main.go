@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	"go.uber.org/zap"
+
 	"github.com/logerror/easylog"
 	"github.com/logerror/easylog/pkg/option"
 	"github.com/logerror/t2t/internal/server/http"
@@ -10,7 +12,6 @@ import (
 	"github.com/logerror/t2t/pkg/util/commonutil"
 	"github.com/logerror/t2t/pkg/util/signalutil"
 	"github.com/logerror/t2t/pkg/util/versionutil"
-	"go.uber.org/zap"
 )
 
 // 2 27 2 27 79 65

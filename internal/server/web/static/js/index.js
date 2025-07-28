@@ -1,8 +1,19 @@
+let allAgents = [];
 document.addEventListener('DOMContentLoaded', function() {
     loadAgents();
     document.getElementById('refreshBtn').addEventListener('click', function() {
         this.classList.add('refreshing');
         loadAgents();
+    });
+    document.getElementById('agentSearch').addEventListener('input', function() {
+        const keyword = this.value.trim().toLowerCase();
+        const filtered = allAgents.filter(agent =>
+            agent.hostTag.toLowerCase().includes(keyword) ||
+            agent.clientId.toLowerCase().includes(keyword) ||
+            (agent.clientUser && agent.clientUser.toLowerCase().includes(keyword))
+        );
+        updateAgentsList(filtered);
+        updateStats(filtered);
     });
 });
 
@@ -10,8 +21,25 @@ function loadAgents() {
     fetch('/agents')
         .then(response => response.json())
         .then(data => {
-            updateAgentsList(data);
-            updateStats(data);
+            allAgents = data;
+            // 获取当前搜索条件
+            const searchInput = document.getElementById('agentSearch');
+            const keyword = searchInput.value.trim().toLowerCase();
+            
+            // 如果有搜索条件，应用过滤
+            if (keyword) {
+                const filtered = allAgents.filter(agent =>
+                    agent.hostTag.toLowerCase().includes(keyword) ||
+                    agent.clientId.toLowerCase().includes(keyword) ||
+                    (agent.clientUser && agent.clientUser.toLowerCase().includes(keyword))
+                );
+                updateAgentsList(filtered);
+                updateStats(filtered);
+            } else {
+                // 没有搜索条件，显示全部
+                updateAgentsList(data);
+                updateStats(data);
+            }
             updateLastRefreshTime();
         })
         .catch(error => {

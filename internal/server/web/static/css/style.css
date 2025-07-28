@@ -3,120 +3,92 @@ html, body {
     padding: 0;
     height: 100%;
     width: 100%;
-    background: #1e1e1e;
-    overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-family: 'Segoe UI', 'Roboto', 'Arial', 'Inter', sans-serif;
+    background: linear-gradient(135deg, #232526 0%, #414345 100%);
+    min-height: 100vh;
 }
 
-.terminal-container {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    background: #1e1e1e;
-}
-
-.terminal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 16px;
-    background: #b5b5b5;
-    border-bottom: 1px solid #333;
-}
-
-.connection-status {
-    color: #ddd;
-    font-size: 14px;
-}
-
-.connection-status.connected {
-    color: #4CAF50;
-}
-
-.connection-status.disconnected {
-    color: #f44336;
-}
-
-.terminal-controls button {
-    background: #333;
-    border: 1px solid #444;
-    color: #ddd;
-    padding: 4px 12px;
-    border-radius: 4px;
-    margin-left: 8px;
-    cursor: pointer;
-    font-size: 12px;
-}
-
-.terminal-controls button:hover {
-    background: #444;
-}
-
-#terminal {
+.main-bg {
+    min-height: 100vh;
     width: 100vw;
-    height: 100vh;
-    padding: 12px;
-    box-sizing: border-box;
-}
-
-.terminal-footer {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 16px;
-    background: #252525;
-    border-top: 1px solid #333;
-    color: #999;
-    font-size: 12px;
-}
-
-.host-info, .client-info {
-    display: flex;
-    align-items: center;
-}
-
-.xterm {
-    height: 100%;
+    background: linear-gradient(135deg, #232526 0%, #414345 100%);
+    /* 移除居中和padding */
+    display: block;
+    align-items: unset;
+    justify-content: unset;
     padding: 0;
 }
 
-.xterm-viewport {
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: #666 #333;
+.main-card.terminal-card {
+    background: #fff;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+    max-width: none;
+    width: 100vw;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
 }
 
-.xterm-viewport::-webkit-scrollbar {
-    width: 8px;
+.terminal-header, .terminal-footer {
+    padding: 12px 24px;
+    background: #f8fafc;
+    border-radius: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
-
-.xterm-viewport::-webkit-scrollbar-track {
-    background: #333;
+.terminal-footer {
+    border-radius: 0;
+    background: #f8fafc;
 }
-
-.xterm-viewport::-webkit-scrollbar-thumb {
-    background-color: #666;
-    border-radius: 4px;
+#terminal-dr {
+    flex: 1;
+    background: #1e1e1e;
+    border-radius: 0;
+    overflow: hidden;
+    width: 100vw;
+    height: 100%;
 }
-
-/* 确保终端占满整个视口 */
-.xterm-screen {
-    width: 100% !important;
-    height: 100% !important;
+.disconnect-btn {
+    background: #dc2626;
+    color: #fff;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1.2rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
 }
-
-/* 添加一些响应式设计 */
-@media (max-width: 768px) {
-    .terminal-header {
-        flex-direction: column;
-        align-items: flex-start;
+.disconnect-btn:hover {
+    background: #b91c1c;
+}
+.connection-status {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #16a34a;
+    margin-left: 1rem;
+}
+.connection-status.disconnected {
+    color: #dc2626;
+}
+.host-info {
+    color: #232526;
+    font-size: 1.05rem;
+    font-weight: 500;
+}
+@media (max-width: 700px) {
+    .main-card.terminal-card {
+        padding: 0;
+        min-width: 0;
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
     }
-    
-    .terminal-controls {
-        margin-top: 8px;
-    }
-    
-    .terminal-footer {
-        flex-direction: column;
-        gap: 4px;
+    .terminal-header, .terminal-footer {
+        padding: 8px 8px;
+        border-radius: 0;
     }
 } 

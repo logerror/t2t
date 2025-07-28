@@ -1,0 +1,13 @@
+server:
+  port: 9002
+
+oem:
+  name: "Terminal 2 Terminal"
+
+helpUrl: https://rqk9rsooi4.feishu.cn/wiki/ROWjwhHtbiQWXdk5lQ8crg2hngg?from=from_copylink
+
+auth:
+  mode: local
+  users:
+    - username: "admin"
+      password: "admin123"

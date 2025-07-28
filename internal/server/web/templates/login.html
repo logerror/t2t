@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>登录 - Terminal 2 Terminal </title>
+    <link rel="icon" href="/static/image/favicon.ico" type="image/x-icon">
+    <link href="/static/css/index.css" rel="stylesheet">
+    <link href="/static/css/fontgoogle.css" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+        }
+        .login-container {
+            background: rgba(255,255,255,0.97);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            padding: 40px 32px 32px 32px;
+            max-width: 380px;
+            width: 100%;
+            position: relative;
+            z-index: 2;
+        }
+        .login-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 18px;
+        }
+        .login-logo img {
+            width: 38px;
+            height: 38px;
+            margin-right: 10px;
+        }
+        .login-title {
+            text-align: center;
+            font-size: 2.1em;
+            font-weight: 700;
+            color: #232526;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+        }
+        .login-subtitle {
+            text-align: center;
+            color: #888;
+            font-size: 1em;
+            margin-bottom: 28px;
+            letter-spacing: 0.5px;
+        }
+        .login-form label {
+            display: block;
+            margin-bottom: 7px;
+            font-weight: 500;
+            color: #333;
+        }
+        .input-group {
+            position: relative;
+            margin-bottom: 18px;
+        }
+        .input-group input {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 12px 38px 12px 38px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 1em;
+            background: #f7f7fa;
+            transition: border 0.2s;
+        }
+        .input-group input:focus {
+            border: 1.5px solid #007bff;
+            outline: none;
+            background: #fff;
+        }
+        .input-group .input-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #aaa;
+            font-size: 1.1em;
+        }
+        .login-form button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(90deg, #007bff 0%, #005fa3 100%);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,123,255,0.08);
+            transition: background 0.2s, transform 0.1s;
+        }
+        .login-form button:hover:not(:disabled) {
+            background: linear-gradient(90deg, #005fa3 0%, #007bff 100%);
+            transform: translateY(-2px) scale(1.02);
+        }
+        .login-form button:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+        .login-error {
+            color: #d32f2f;
+            text-align: center;
+            margin-bottom: 12px;
+            font-size: 1em;
+        }
+        @media (max-width: 500px) {
+            .login-container { padding: 24px 8px; }
+        }
+        /* 背景装饰 */
+        .bg-circles {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .bg-circles span {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.18;
+            filter: blur(2px);
+        }
+        .bg-circles .c1 { width: 180px; height: 180px; background: #007bff; left: 8vw; top: 10vh; }
+        .bg-circles .c2 { width: 120px; height: 120px; background: #00c6fb; right: 10vw; top: 18vh; }
+        .bg-circles .c3 { width: 90px; height: 90px; background: #005fa3; left: 20vw; bottom: 12vh; }
+        .bg-circles .c4 { width: 140px; height: 140px; background: #232526; right: 12vw; bottom: 8vh; }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<body>
+<div class="bg-circles">
+    <span class="c1"></span>
+    <span class="c2"></span>
+    <span class="c3"></span>
+    <span class="c4"></span>
+</div>
+<div class="login-container">
+    <div class="login-logo">
+        <img src="/static/image/favicon.ico" alt="logo">
+        <span style="font-size:1.3em;font-weight:600;color:#007bff;letter-spacing:1px;">Terminal 2 Terminal</span>
+    </div>
+<!--    <div class="login-title">远程终端环境管理平台</div>-->
+    <div class="login-subtitle">便捷地连接你的远程终端环境</div>
+    <form class="login-form" id="loginForm" autocomplete="off">
+        <div class="input-group">
+            <span class="input-icon"><i class="fa fa-user"></i></span>
+            <input type="text" id="username" name="username" placeholder="用户名" required autofocus>
+        </div>
+        <div class="input-group">
+            <span class="input-icon"><i class="fa fa-lock"></i></span>
+            <input type="password" id="password" name="password" placeholder="密码" required>
+        </div>
+        <div class="login-error" id="loginError"></div>
+        <button type="submit" id="loginBtn">登录</button>
+    </form>
+    <div style="text-align:center;margin-top:18px;">
+        <a href="https://rqk9rsooi4.feishu.cn/wiki/ROWjwhHtbiQWXdk5lQ8crg2hngg?from=from_copylink" target="_blank" style="color:#007bff;text-decoration:none;font-size:0.98em;">
+            <i class="fa fa-question-circle"></i> 帮助文档
+        </a>
+    </div>
+</div>
+<script>
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const errorDiv = document.getElementById('loginError');
+        errorDiv.textContent = '';
+        document.getElementById('loginBtn').disabled = true;
+        try {
+            const resp = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user: username, password: password })
+            });
+            const data = await resp.json();
+            if (resp.ok && data.token) {
+                document.cookie = `token=${data.token}; path=/`;
+                window.location.href = '/';
+            } else {
+                errorDiv.textContent = data.error || '登录失败';
+            }
+        } catch (err) {
+            errorDiv.textContent = '网络错误';
+        } finally {
+            document.getElementById('loginBtn').disabled = false;
+        }
+    });
+    // 支持回车自动提交
+    document.getElementById('password').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            document.getElementById('loginBtn').click();
+        }
+    });
+</script>
+</body>
+</html> 

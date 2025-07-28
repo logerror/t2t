@@ -11,7 +11,16 @@ import (
 )
 
 func GetLatestVersion() (*version.Version, error) {
-	resp, err := http.Get(fmt.Sprintf("%s://%s/version", svcconstants.AgentServerHttpSchema, svcconstants.AgentServerHost))
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s://%s/version", svcconstants.AgentServerHttpSchema, svcconstants.AgentServerHost), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// 从 authutil 获取 token
+	//token, _ := authutil.GetToken()
+	//req.Header.Set("Authorization", token)
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +40,16 @@ func GetLatestVersion() (*version.Version, error) {
 }
 
 func GetAgentVersion(hostTag, clientId string) (string, error) {
-	resp, err := http.Get(fmt.Sprintf("%s://%s/agent/%s/%s", svcconstants.AgentServerHttpSchema, svcconstants.AgentServerHost, hostTag, clientId))
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s://%s/agent/%s/%s", svcconstants.AgentServerHttpSchema, svcconstants.AgentServerHost, hostTag, clientId), nil)
+	if err != nil {
+		return "", err
+	}
+
+	// 从 authutil 获取 token
+	//token, _ := authutil.GetToken()
+	//req.Header.Set("Authorization", token)
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -62,13 +80,13 @@ func GetAgentVersion(hostTag, clientId string) (string, error) {
 }
 
 func GetCurrentClientVersion() string {
-	return "2.0.0"
+	return "2.0.5"
 }
 
 func GetCurrentAgentVersion() string {
-	return "2.0.0"
+	return "2.0.3"
 }
 
 func GetCurrentServerVersion() string {
-	return "2.0.0"
+	return "2.0.5"
 }

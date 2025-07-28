@@ -1,0 +1,118 @@
+//go:build darwin
+// +build darwin
+
+package client
+
+import (
+	"fmt"
+	"os"
+	"os/exec"
+	"os/user"
+
+	"github.com/creack/pty"
+	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/sys/unix"
+)
+
+type darwinTerminal struct {
+	shellCmd *exec.Cmd
+	pty      *os.File
+	termType string
+	oldState *terminal.State
+}
+
+func NewTerminal(termType string) Terminal {
+	return &darwinTerminal{termType: termType}
+}
+
+func (t *darwinTerminal) StartShell() error {
+	currentShell := "/bin/bash"
+	if _, err := os.Stat(currentShell); err != nil {
+		currentShell = "/bin/sh"
+	}
+	cmd := exec.Command(currentShell)
+	cmd.Env = append(os.Environ(),
+		fmt.Sprintf("TERM=%s", t.termType),
+		"COLORTERM=truecolor",
+	)
+	u, err := user.Current()
+	if err == nil && u.HomeDir != "" {
+		cmd.Dir = u.HomeDir
+	}
+	ptmx, err := pty.Start(cmd)
+	if err != nil {
+		return fmt.Errorf("启动 PTY 失败: %v", err)
+	}
+	if err := pty.Setsize(ptmx, &pty.Winsize{Rows: 24, Cols: 80}); err != nil {
+		return fmt.Errorf("设置 PTY 大小失败: %v", err)
+	}
+	if err := setupPtyAttr(ptmx); err != nil {
+		return fmt.Errorf("设置 PTY 属性失败: %v", err)
+	}
+	t.shellCmd = cmd
+	t.pty = ptmx
+	return nil
+}
+
+func (t *darwinTerminal) Read(b []byte) (int, error)  { return t.pty.Read(b) }
+func (t *darwinTerminal) Write(b []byte) (int, error) { return t.pty.Write(b) }
+func (t *darwinTerminal) Resize(rows, cols int) error {
+	return pty.Setsize(t.pty, &pty.Winsize{Rows: uint16(rows), Cols: uint16(cols)})
+}
+func (t *darwinTerminal) Close() error {
+	if t.pty != nil {
+		t.pty.Close()
+	}
+	if t.shellCmd != nil && t.shellCmd.Process != nil {
+		t.shellCmd.Process.Kill()
+	}
+	return nil
+}
+
+func (t *darwinTerminal) SetupLocalTerminal() error {
+	fd := int(os.Stdin.Fd())
+	oldState, err := terminal.MakeRaw(fd)
+	if err != nil {
+		return fmt.Errorf("设置终端失败: %v", err)
+	}
+	t.oldState = oldState
+
+	termios, err := unix.IoctlGetTermios(fd, unix.TIOCGETA)
+	if err != nil {
+		return fmt.Errorf("获取终端属性失败: %v", err)
+	}
+	termios.Iflag |= unix.ICRNL
+	termios.Oflag |= unix.ONLCR
+	termios.Lflag |= unix.IEXTEN
+	termios.Oflag |= unix.OPOST
+	termios.Oflag |= unix.ONLRET
+	termios.Lflag |= unix.ECHOE
+	termios.Lflag |= unix.ECHOK
+	termios.Cc[unix.VMIN] = 1
+	termios.Cc[unix.VTIME] = 0
+
+	if err := unix.IoctlSetTermios(fd, unix.TIOCSETA, termios); err != nil {
+		return fmt.Errorf("设置终端属性失败: %v", err)
+	}
+	return nil
+}
+
+func (t *darwinTerminal) RestoreLocalTerminal() {
+	if t.oldState != nil && terminal.IsTerminal(int(os.Stdin.Fd())) {
+		terminal.Restore(int(os.Stdin.Fd()), t.oldState)
+	}
+}
+
+func setupPtyAttr(ptmx *os.File) error {
+	termios, err := unix.IoctlGetTermios(int(ptmx.Fd()), unix.TIOCGETA)
+	if err != nil {
+		return err
+	}
+	termios.Iflag |= unix.ICRNL
+	termios.Oflag |= unix.ONLCR
+	termios.Lflag |= unix.ICANON | unix.ECHO | unix.ECHOE | unix.ECHOK
+	termios.Oflag |= unix.OPOST | unix.ONLRET
+	termios.Cc[unix.VMIN] = 1
+	termios.Cc[unix.VTIME] = 0
+	return unix.IoctlSetTermios(int(ptmx.Fd()), unix.TIOCSETA, termios)
+}

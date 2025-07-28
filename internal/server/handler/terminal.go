@@ -9,10 +9,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gorilla/websocket"
 	"github.com/logerror/easylog"
+
+	"github.com/gorilla/websocket"
+	"github.com/logerror/t2t/internal/server/service/manager"
 	"github.com/logerror/t2t/internal/server/web"
 	"go.uber.org/zap"
+
+	"github.com/logerror/t2t/pkg/util/authutil"
 )
 
 var tUpgrader = websocket.Upgrader{
@@ -23,7 +27,6 @@ var tUpgrader = websocket.Upgrader{
 	WriteBufferSize: 32 * 1024,
 }
 
-// TerminalMessage 定义终端消息结构
 type TerminalMessage struct {
 	Type string `json:"type"`
 	Rows int    `json:"rows,omitempty"`
@@ -31,13 +34,11 @@ type TerminalMessage struct {
 	Data string `json:"data,omitempty"`
 }
 
-// ServeTerminal 提供终端页面
 func ServeTerminal(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFS(web.TemplateFiles, "templates/terminal.html"))
 	tmpl.Execute(w, nil)
 }
 
-// HandleTerminalWS 处理Web终端的WebSocket连接
 func HandleTerminalWS(w http.ResponseWriter, r *http.Request) {
 	hostTag := r.URL.Query().Get("hostTag")
 	clientId := r.URL.Query().Get("clientId")
@@ -55,30 +56,61 @@ func HandleTerminalWS(w http.ResponseWriter, r *http.Request) {
 	}
 	defer webConn.Close()
 
+	// 获取token并解析用户名
+	token := r.Header.Get("Authorization")
+	if token == "" {
+		cookie, err := r.Cookie("token")
+		if err == nil {
+			token = cookie.Value
+		}
+	}
+	clientUser := ""
+	if token != "" {
+		claims, err := authutil.VerifyToken(token)
+		if err == nil && claims != nil && claims.Subject != "" {
+			clientUser = claims.Subject
+		}
+	}
+
 	// 获取对应的agent连接
 	tag := fmt.Sprintf("%s-%s", hostTag, clientId)
+
+	// 优雅清理：defer在webConn.Close()之前，确保wg.Wait()后执行
+	defer func() {
+		if c, ok := connManager.Clients[tag]; ok {
+			c.ClientUser = ""
+			c.ClientVersion = ""
+		}
+		webConn.WriteMessage(websocket.TextMessage, []byte("\x1b[31m由于网络较差或agent端已退出，该链接已不可用\x1b[0m\r\n"))
+		easylog.Info("Web terminal connection closed",
+			zap.String("hostTag", hostTag),
+			zap.String("clientId", clientId))
+	}()
 
 	ip, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		// 如果解析失败，直接使用 RemoteAddr
 		ip = r.RemoteAddr
 	}
-	c, exist := connManager.clients[tag]
+	if clientUser == "" {
+		clientUser = ip
+	}
+	c, exist := connManager.Clients[tag]
 	if exist {
-		c.ws = webConn
-		c.clientUser = ip
-		c.clientVersion = "Web Terminal"
+		c.Ws = webConn
+		c.ClientUser = clientUser
+		c.ClientVersion = "Web Terminal"
 	} else {
-		connManager.clients[tag] = &ClientConnection{
-			ws:            webConn,
-			hostTag:       hostTag,
-			clientId:      clientId,
-			clientUser:    ip,
-			clientVersion: "web",
+		connManager.Clients[tag] = &manager.ClientConnection{
+			Ws:            webConn,
+			HostTag:       hostTag,
+			ClientId:      clientId,
+			ClientUser:    clientUser,
+			ClientVersion: "Web Terminal",
 		}
 	}
 
-	agentConn, exists := connManager.agents[tag]
+	agentConn, exists := connManager.Agents[tag]
 	if !exists || agentConn == nil {
 		webConn.WriteMessage(websocket.TextMessage, []byte("\x1b[31mAgent connection not found\x1b[0m\r\n"))
 		return
@@ -118,15 +150,19 @@ func HandleTerminalWS(w http.ResponseWriter, r *http.Request) {
 					easylog.Error("Error reading from web terminal",
 						zap.String("tag", tag),
 						zap.Error(err))
+					// 立即清空用户信息
+					if c, ok := connManager.Clients[tag]; ok {
+						c.ClientUser = ""
+						c.ClientVersion = ""
+					}
 					return
 				}
-
 				// 检查是否是调整大小的消息
 				if messageType == websocket.TextMessage {
 					var termMsg TerminalMessage
-					if err := json.Unmarshal(message, &termMsg); err == nil && termMsg.Type == "resize" {
+					if err = json.Unmarshal(message, &termMsg); err == nil && termMsg.Type == "resize" {
 						sizeMessage := []byte(fmt.Sprintf("\x1b[8;%d;%dt", termMsg.Rows, termMsg.Cols))
-						if err := agentConn.ws.WriteMessage(websocket.BinaryMessage, sizeMessage); err != nil {
+						if err := agentConn.Ws.WriteMessage(websocket.BinaryMessage, sizeMessage); err != nil {
 							easylog.Error("Error sending resize message",
 								zap.String("tag", tag),
 								zap.Error(err))
@@ -135,9 +171,8 @@ func HandleTerminalWS(w http.ResponseWriter, r *http.Request) {
 						continue
 					}
 				}
-
 				// 转发消息到agent
-				if err := agentConn.ws.WriteMessage(messageType, message); err != nil {
+				if err = agentConn.Ws.WriteMessage(messageType, message); err != nil {
 					easylog.Error("Error forwarding message to agent",
 						zap.String("tag", tag),
 						zap.Error(err))
@@ -155,14 +190,13 @@ func HandleTerminalWS(w http.ResponseWriter, r *http.Request) {
 			case <-done:
 				return
 			default:
-				messageType, message, err := agentConn.ws.ReadMessage()
+				messageType, message, err := agentConn.Ws.ReadMessage()
 				if err != nil {
 					easylog.Error("Error reading from agent",
 						zap.String("tag", tag),
 						zap.Error(err))
 					return
 				}
-
 				if err := webConn.WriteMessage(messageType, message); err != nil {
 					easylog.Error("Error forwarding message to web terminal",
 						zap.String("tag", tag),
@@ -173,8 +207,13 @@ func HandleTerminalWS(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	// 等待连接结束
 	wg.Wait()
+
+	// 资源清理
+	if c, ok := connManager.Clients[tag]; ok {
+		c.ClientUser = ""
+		c.ClientVersion = ""
+	}
 	easylog.Info("Web terminal connection closed",
 		zap.String("hostTag", hostTag),
 		zap.String("clientId", clientId))

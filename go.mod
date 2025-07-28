@@ -4,6 +4,9 @@ go 1.22
 
 require (
 	github.com/creack/pty v1.1.21
+	github.com/go-ldap/ldap/v3 v3.4.6
+	github.com/golang-jwt/jwt/v5 v5.2.2
+	github.com/google/uuid v1.4.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/logerror/easylog v1.0.1
 	github.com/olekukonko/tablewriter v0.0.5
@@ -17,14 +20,15 @@ require (
 )
 
 require (
+	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/go-asn1-ber/asn1-ber v1.5.5 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
-	github.com/mattn/go-runewidth v0.0.16 // indirect
+	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
-	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect

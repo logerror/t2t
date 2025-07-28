@@ -15,5 +15,5 @@ var agentCmd = &cobra.Command{
 }
 
 func init() {
-	//rootCmd.AddCommand(agentCmd)
+	rootCmd.AddCommand(agentCmd)
 }

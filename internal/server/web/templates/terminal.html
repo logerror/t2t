@@ -14,27 +14,40 @@
             background: #1e1e1e;
             overflow: hidden;
         }
-        #terminal-t2t {
+        #terminal-dr {
             height: 99%;
             width: 100%;
         }
     </style>
 </head>
 <body>
-
-<div class="terminal-container">
+<div class="main-bg">
+    <div class="main-card terminal-card">
     <div class="terminal-header">
-        <span class="host-info">For Your Better Terminal (T2T)</span>
+            <span class="host-info">Terminal 2 Terminal <span id="hostInfo"></span></span>
+            <span class="connection-status connected" id="connStatus">已连接</span>
     </div>
-    <div id="terminal-t2t"></div>
+    <div id="terminal-dr"></div>
+    <div class="terminal-footer">
+            <span class="host-info">Vim编辑模式下如有异常使用 Ctrl + C 退出编辑模式</span>
+            <button class="action-btn disconnect-btn" onclick="window.close()">断开连接</button>
+        </div>
+    </div>
 </div>
-
-<!--xterm@5.3.0-->
 <script src="/static/js/xterm.min.js"></script>
-<!--xterm-addon-fit@0.8.0-->
 <script src="/static/js/xterm-addon-fit.min.js"></script>
-<!--xterm-addon-attach@0.8.0-->
 <script src="/static/js/xterm-addon-attach.min.js"></script>
 <script src="/static/js/terminal.js"></script>
+<script>
+    // 动态渲染 hostTag/clientId
+    document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const hostTag = urlParams.get('hostTag');
+        const clientId = urlParams.get('clientId');
+        if (hostTag && clientId) {
+            document.getElementById('hostInfo').textContent = `>>> ${hostTag}:${clientId}`;
+        }
+    });
+</script>
 </body>
 </html>
