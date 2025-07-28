@@ -92,3 +92,169 @@ html, body {
         border-radius: 0;
     }
 } 
+
+/* 额外的炫酷效果 */
+
+/* 卡片悬停效果增强 */
+.main-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.3);
+}
+
+/* 表格行悬停效果增强 */
+tr:hover {
+    transform: scale(1.01);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+/* 按钮点击效果 */
+.action-btn:active {
+    transform: scale(0.95);
+}
+
+/* 搜索框聚焦效果增强 */
+.search-input:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(0, 123, 255, 0.2);
+}
+
+/* 加载动画增强 */
+.loading-spinner {
+    border-width: 4px;
+    border-top-color: var(--gradient-primary);
+    animation: spin 1s linear infinite, glow 1.5s ease-in-out infinite alternate;
+}
+
+/* 数字计数动画 */
+.stat-value {
+    transition: all 0.3s ease;
+}
+
+.stat-value.animate {
+    animation: bounce 0.6s ease-in-out;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-5px);
+    }
+    60% {
+        transform: translateY(-2px);
+    }
+}
+
+/* 粒子效果增强 */
+.particle {
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+    width: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(241, 245, 249, 0.3);
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--gradient-primary);
+    border-radius: 6px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #5a67d8 0%, #667eea 100%);
+    background-clip: content-box;
+}
+
+/* 响应式增强 */
+@media (max-width: 768px) {
+    .particle {
+        display: none;
+    }
+    
+    .main-card {
+        margin: 0;
+        padding: 1rem;
+    }
+    
+    .stat-item {
+        padding: 1rem 1.5rem;
+    }
+    
+    .action-btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.8rem;
+    }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --text-primary: #f1f5f9;
+        --text-secondary: #cbd5e1;
+        --border-color: #334155;
+    }
+    
+    .main-card {
+        background: rgba(15, 23, 42, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .agents-list {
+        background: rgba(15, 23, 42, 0.95);
+    }
+    
+    .search-input {
+        background: rgba(30, 41, 59, 0.9);
+        color: var(--text-primary);
+    }
+    
+    .stat-item {
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* 动画性能优化 */
+* {
+    will-change: transform;
+}
+
+/* 减少动画在低端设备上的性能影响 */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .particle {
+        display: none;
+    }
+}
+
+/* 焦点可见性增强 */
+.action-btn:focus-visible,
+.search-input:focus-visible,
+.refresh-btn:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+    .main-card {
+        border: 2px solid var(--text-primary);
+    }
+    
+    .action-btn {
+        border: 2px solid currentColor;
+    }
+} 

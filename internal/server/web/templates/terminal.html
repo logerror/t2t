@@ -5,49 +5,346 @@
     <title>T2T Web Terminal</title>
     <link rel="stylesheet" href="/static/css/xterm.min.css">
     <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/terminal.css">
     <style>
         html, body {
             margin: 0;
             padding: 0;
             height: 100%;
             width: 100%;
-            background: #1e1e1e;
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+            overflow: hidden;
+            font-family: 'Segoe UI', 'Roboto', 'Arial', 'Inter', sans-serif;
+        }
+        
+        /* 粒子背景 */
+        .particles-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .particle:nth-child(odd) {
+            animation-duration: 8s;
+            animation-delay: 1s;
+        }
+        
+        .particle:nth-child(even) {
+            animation-duration: 10s;
+            animation-delay: 2s;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px) translateX(0px);
+                opacity: 0;
+            }
+            50% {
+                transform: translateY(-100px) translateX(50px);
+                opacity: 1;
+            }
+        }
+        
+        .main-bg {
+            min-height: 100vh;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+            display: flex;
+            align-items: stretch;
+            justify-content: stretch;
+            padding: 0;
+            margin: 0;
+            position: relative;
+        }
+        
+        .terminal-card {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 0;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            max-width: none;
+            max-height: none;
+        }
+        
+        .terminal-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 0;
+        }
+        
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+        
+        .host-info {
+            color: #f1f5f9;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .host-info::before {
+            content: '🖥️';
+            font-size: 1.2rem;
+        }
+        
+        .connection-status {
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
             overflow: hidden;
         }
-        #terminal-dr {
-            height: 99%;
+        
+        .connection-status::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
             width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .connection-status:hover::before {
+            left: 100%;
+        }
+        
+        .connection-status.connected {
+            background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(22, 163, 74, 0.3);
+        }
+        
+        .connection-status.disconnected {
+            background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+        }
+        
+        #terminal-dr {
+            flex: 1;
+            padding: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .terminal-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+        
+        .disconnect-btn {
+            background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .disconnect-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .disconnect-btn:hover::before {
+            left: 100%;
+        }
+        
+        .disconnect-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .main-bg {
+                padding: 0;
+            }
+            
+            .terminal-card {
+                border-radius: 0;
+                max-height: none;
+            }
+            
+            .terminal-header {
+                padding: 0.75rem 1rem;
+            }
+            
+            .terminal-footer {
+                padding: 0.75rem 1rem;
+            }
+            
+            .host-info {
+                font-size: 1rem;
+            }
+        }
+        
+        /* 页面加载动画 */
+        body {
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        
+        body.loaded {
+            opacity: 1;
         }
     </style>
 </head>
 <body>
-<div class="main-bg">
-    <div class="main-card terminal-card">
-    <div class="terminal-header">
-            <span class="host-info">Terminal 2 Terminal <span id="hostInfo"></span></span>
-            <span class="connection-status connected" id="connStatus">已连接</span>
-    </div>
-    <div id="terminal-dr"></div>
-    <div class="terminal-footer">
-            <span class="host-info">Vim编辑模式下如有异常使用 Ctrl + C 退出编辑模式</span>
-            <button class="action-btn disconnect-btn" onclick="window.close()">断开连接</button>
+    <!-- 粒子背景 -->
+    <div class="particles-bg" id="particlesBg"></div>
+    
+    <div class="main-bg">
+        <div class="main-card terminal-card">
+            <div class="terminal-header">
+                <span class="host-info">Terminal 2 Terminal <span id="hostInfo"></span></span>
+                <span class="connection-status connected" id="connStatus">已连接</span>
+            </div>
+            <div id="terminal-dr"></div>
+            <div class="terminal-footer">
+                <span class="host-info" style="font-size: 0.9rem; opacity: 0.8;">💡 Vim编辑模式下如有异常使用 Ctrl + C 退出编辑模式</span>
+                <button class="disconnect-btn" onclick="disconnectTerminal()">
+                    <svg style="width: 16px; height: 16px; margin-right: 8px;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16,4 20,4 20,20"></polyline>
+                        <line x1="16" y1="20" x2="16" y2="4"></line>
+                    </svg>
+                    断开连接
+                </button>
+            </div>
         </div>
     </div>
-</div>
-<script src="/static/js/xterm.min.js"></script>
-<script src="/static/js/xterm-addon-fit.min.js"></script>
-<script src="/static/js/xterm-addon-attach.min.js"></script>
-<script src="/static/js/terminal.js"></script>
-<script>
-    // 动态渲染 hostTag/clientId
-    document.addEventListener('DOMContentLoaded', () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const hostTag = urlParams.get('hostTag');
-        const clientId = urlParams.get('clientId');
-        if (hostTag && clientId) {
-            document.getElementById('hostInfo').textContent = `>>> ${hostTag}:${clientId}`;
+    
+    <script src="/static/js/xterm.min.js"></script>
+    <script src="/static/js/xterm-addon-fit.min.js"></script>
+    <script src="/static/js/xterm-addon-attach.min.js"></script>
+    <script src="/static/js/terminal.js"></script>
+    <script>
+        // 生成粒子背景
+        function createParticles() {
+            const particlesBg = document.getElementById('particlesBg');
+            const particleCount = 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 5 + 's';
+                particle.style.animationDuration = (Math.random() * 5 + 5) + 's';
+                particlesBg.appendChild(particle);
+            }
         }
-    });
-</script>
+        
+        // 断开连接函数
+        function disconnectTerminal() {
+            if (confirm('确定要断开连接吗？')) {
+                window.close();
+            }
+        }
+        
+        // 页面加载动画
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            
+            // 页面加载动画
+            setTimeout(() => {
+                document.body.classList.add('loaded');
+            }, 100);
+            
+            // 动态渲染 hostTag/clientId
+            const urlParams = new URLSearchParams(window.location.search);
+            const hostTag = urlParams.get('hostTag');
+            const clientId = urlParams.get('clientId');
+            if (hostTag && clientId) {
+                document.getElementById('hostInfo').textContent = `>>> ${hostTag}:${clientId}`;
+            }
+            
+            // 添加键盘快捷键
+            document.addEventListener('keydown', function(e) {
+                // Ctrl/Cmd + W 关闭窗口
+                if ((e.ctrlKey || e.metaKey) && e.key === 'w') {
+                    e.preventDefault();
+                    disconnectTerminal();
+                }
+                
+                // ESC 显示帮助信息
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    showHelp();
+                }
+            });
+        });
+        
+        // 显示帮助信息
+        function showHelp() {
+            const helpText = `
+快捷键说明：
+• Ctrl/Cmd + W: 断开连接
+• ESC: 显示此帮助
+• Ctrl + C: 中断当前命令
+• Ctrl + L: 清屏
+            `;
+            alert(helpText);
+        }
+    </script>
 </body>
 </html>

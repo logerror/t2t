@@ -69,11 +69,13 @@ html, body {
 .main-bg {
     min-height: 100vh;
     width: 100vw;
+    height: 100vh;
     background: linear-gradient(135deg, #232526 0%, #414345 100%);
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: center;
-    padding: 40px 0;
+    padding: 40px 20px;
+    margin: 0;
     position: relative;
 }
 
@@ -84,11 +86,16 @@ html, body {
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     padding: 2.5rem 2.5rem 2rem 2.5rem;
     max-width: 1400px;
-    width: 98vw;
+    width: 100%;
     min-width: 340px;
+    height: auto;
+    min-height: 80vh;
     border: 1px solid rgba(255, 255, 255, 0.2);
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    margin: 0 auto;
 }
 
 .main-card::before {
@@ -111,6 +118,7 @@ header {
     top: 0;
     background: transparent;
     z-index: 1000;
+    padding: 0;
 }
 
 .header-content {
@@ -293,6 +301,10 @@ h1::after {
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.2);
     position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 
 .agents-list::before {
@@ -305,10 +317,17 @@ h1::after {
     background: var(--gradient-secondary);
 }
 
+.table-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+
 table {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
+    display: table;
 }
 
 thead {
@@ -316,6 +335,11 @@ thead {
     position: sticky;
     top: 0;
     z-index: 10;
+    display: table-header-group;
+}
+
+tbody {
+    display: table-row-group;
 }
 
 th {
@@ -468,6 +492,20 @@ tr:hover {
     box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
 }
 
+.connect-btn:disabled {
+    background: #e2e8f0;
+    color: #94a3b8;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+.connect-btn:disabled:hover {
+    background: #e2e8f0;
+    transform: none;
+    box-shadow: none;
+}
+
 .no-agents {
     text-align: center;
     padding: 4rem 2rem;
@@ -588,42 +626,21 @@ tr:nth-child(even) {
     animation: spin 1s ease-in-out infinite;
 }
 
-/* 状态指示器 */
-.status-indicator {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    margin-right: 8px;
-    animation: pulse 2s infinite;
-}
-
-.status-indicator.online {
-    background: var(--success-color);
-    box-shadow: 0 0 0 rgba(22, 163, 74, 0.4);
-}
-
-.status-indicator.offline {
-    background: #dc2626;
-}
-
-@keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7);
-    }
-    70% {
-        box-shadow: 0 0 0 10px rgba(22, 163, 74, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
-    }
-}
-
 /* 响应式设计 */
 @media (max-width: 768px) {
+    .main-bg {
+        padding: 20px 10px;
+        align-items: center;
+        justify-content: center;
+    }
+    
     .main-card {
         padding: 1.5rem;
-        margin: 1rem;
+        margin: 0 auto;
+        min-height: 90vh;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 100%;
     }
     
     header {
