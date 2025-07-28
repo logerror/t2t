@@ -12,6 +12,9 @@
 **t2t**  (Terminal to Terminal)    
 **t2t**  is a tool designed to simplify remote host management via the terminal. It allows users to connect easily to multiple remote hosts and manage them concurrently. t2t supports multiple users connecting to the same remote host simultaneously, with a central server managing agent-client connections.
 
+![exec log](./resource/img/index.png)
+![exec log](./resource/img/terminal.png)
+
 ## Features
 
 - **Multi-host management**: Easily connect and manage multiple remote hosts through a unified interface.
