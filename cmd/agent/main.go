@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
@@ -34,7 +35,13 @@ func main() {
 		hostTag,
 		clientId)
 
-	ws, _, err := websocket.DefaultDialer.Dial(url, nil)
+	// 设置WebSocket连接的header
+	headers := http.Header{}
+	headers.Set(svcconstants.WsT2TAgentTokenHeader, "ba8Eg6GQVNpRv6d0")
+	headers.Set(svcconstants.WsT2TAgentArchHeader, runtime.GOARCH)
+	headers.Set(svcconstants.WsT2TAgentVersionHeader, versionutil.GetCurrentAgentVersion())
+
+	ws, _, err := websocket.DefaultDialer.Dial(url, headers)
 	if err != nil {
 		log.Fatalf("WebSocket 连接失败: %v", err)
 	}
