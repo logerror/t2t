@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"strings"
 
 	"github.com/creack/pty"
 	"golang.org/x/sys/unix"
@@ -28,7 +29,23 @@ func (t *darwinTerminal) StartShell() error {
 	if _, err := os.Stat(currentShell); err != nil {
 		currentShell = "/bin/sh"
 	}
-	cmd := exec.Command(currentShell)
+
+	var cmd *exec.Cmd
+	monitorScript := os.Getenv("T2T_MONITOR_SCRIPT")
+	if strings.HasSuffix(currentShell, "bash") {
+		if monitorScript != "" {
+			if _, err := os.Stat(monitorScript); err == nil {
+				cmd = exec.Command(currentShell, "--rcfile", monitorScript, "-i")
+			} else {
+				cmd = exec.Command(currentShell, "-i")
+			}
+		} else {
+			cmd = exec.Command(currentShell, "-i")
+		}
+	} else {
+		cmd = exec.Command(currentShell, "-i")
+	}
+
 	cmd.Env = append(os.Environ(),
 		fmt.Sprintf("TERM=%s", t.termType),
 		"COLORTERM=truecolor",

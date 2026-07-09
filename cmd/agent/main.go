@@ -47,9 +47,6 @@ func main() {
 	}
 
 	term := agent.NewTerminal("xterm-256color")
-	if err := term.StartShell(); err != nil {
-		log.Fatalf("Shell 启动失败: %v", err)
-	}
 
 	ag := agent.NewAgent(ws, term, hostTag, clientId)
 	ctx := context.Background()

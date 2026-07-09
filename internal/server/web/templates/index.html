@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>t2t</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal 2 Terminal - Agent Dashboard</title>
     <link rel="icon" href="/static/image/favicon.ico" type="image/x-icon">
-    <link href="/static/css/index.css" rel="stylesheet">
-    <link href="/static/css/style.css" rel="stylesheet">
-    <link href="/static/css/fontgoogle.css" rel="stylesheet">
+    <link href="/static/css/index.css?v=20260709b" rel="stylesheet">
+    <link href="/static/css/index-modern.css?v=20260709b" rel="stylesheet">
+    <link href="/static/css/fontgoogle.css?v=20260709b" rel="stylesheet">
+    <!-- 内联SVG favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23667eea' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M4 6h16M4 10h16M4 14h16M4 18h16'/><rect x='2' y='4' width='20' height='16' rx='2'/><circle cx='8' cy='8' r='1' fill='%23667eea'/><circle cx='12' cy='8' r='1' fill='%23667eea'/><circle cx='16' cy='8' r='1' fill='%23667eea'/></svg>" type="image/svg+xml">
 </head>
 <body>
     <!-- 粒子背景 -->
@@ -17,25 +21,57 @@
         <div class="main-card">
             <header>
                 <div class="header-content">
-                    <h1>Terminal 2 Terminal</h1>
+                    <h1>
+                        <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M4 6h16M4 10h16M4 14h16M4 18h16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <rect x="2" y="4" width="20" height="16" rx="2" stroke-width="2"/>
+                            <circle cx="8" cy="8" r="1" fill="currentColor"/>
+                            <circle cx="12" cy="8" r="1" fill="currentColor"/>
+                            <circle cx="16" cy="8" r="1" fill="currentColor"/>
+                        </svg>
+                        Terminal 2 Terminal
+                    </h1>
+                    <p class="page-subtitle">统一管理多台主机，快速连接并协同处置问题</p>
                     <div class="stats">
                         <div class="stat-item">
+                            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="9" cy="7" r="4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
                             <span class="stat-label">Total Agents</span>
                             <span class="stat-value" id="totalAgents">0</span>
                         </div>
                         <div class="stat-item">
+                            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
                             <span class="stat-label">Active Users</span>
                             <span class="stat-value" id="activeUsers">0</span>
                         </div>
                     </div>
                 </div>
                 <div class="refresh-container">
-                    <input type="text" id="agentSearch" placeholder="搜索 Host、授权码等..." class="search-input">
+                    <div class="search-container">
+                        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="11" cy="11" r="8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M21 21l-4.35-4.35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <input type="text" id="agentSearch" placeholder="搜索 Host、授权码等..." class="search-input">
+                    </div>
                     <button id="refreshBtn" class="refresh-btn">
                         <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.9L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.9L3 16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                         <span>刷新</span>
+                    </button>
+
+                    <button id="openTimeMachineBtn" class="mode-btn">
+                        终端时光机
+                    </button>
+                    <button id="openWarRoomBtn" class="mode-btn mode-btn-secondary">
+                        战情室模式
                     </button>
 
                     <span id="lastUpdate"></span>
@@ -43,10 +79,26 @@
             </header>
             <main>
                 <div class="agents-list">
+                    <div class="list-toolbar">
+                        <span class="list-title">Agent Connections</span>
+                        <span class="list-hint">支持搜索、复制连接命令和一键打开 Web Terminal</span>
+                    </div>
                     <div class="table-wrapper">
                         <table id="agentsList">
+                            <colgroup>
+                                <col class="col-status">
+                                <col class="col-host">
+                                <col class="col-code">
+                                <col class="col-arch">
+                                <col class="col-agent-ver">
+                                <col class="col-client-ver">
+                                <col class="col-user">
+                                <col class="col-time">
+                                <col class="col-actions">
+                            </colgroup>
                             <thead>
                                 <tr>
+                                    <th>状态</th>
                                     <th>Host信息</th>
                                     <th>授权码</th>
                                     <th>Agent Arch</th>
@@ -66,6 +118,6 @@
             </main>
         </div>
     </div>
-<script src="/static/js/index.js"></script>
+<script src="/static/js/index.js?v=20260709b"></script>
 </body>
 </html>

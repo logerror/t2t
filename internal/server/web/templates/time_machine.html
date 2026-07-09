@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal Time Machine</title>
+    <link rel="stylesheet" href="/static/css/fontgoogle.css?v=20260709b">
+    <link rel="stylesheet" href="/static/css/time-machine.css?v=20260709b">
+</head>
+<body>
+    <div class="tm-page">
+        <header class="tm-header">
+            <div>
+                <h1>终端时光机</h1>
+                <p>按会话回放历史命令，快速复盘操作轨迹</p>
+            </div>
+            <div class="tm-actions">
+                <a class="tm-link" href="/">返回首页</a>
+                <button id="tmRefreshBtn" class="tm-btn">刷新会话</button>
+            </div>
+        </header>
+
+        <main class="tm-main">
+            <section class="tm-panel tm-sessions-panel">
+                <div class="tm-panel-header">
+                    <h2>会话列表</h2>
+                    <input id="tmSessionSearch" type="text" placeholder="搜索 host / 授权码">
+                </div>
+                <div class="tm-session-list-wrap">
+                    <table class="tm-session-table">
+                        <thead>
+                            <tr>
+                                <th>会话</th>
+                                <th>命令数</th>
+                                <th>最近时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tmSessionsBody">
+                            <tr><td colspan="4" class="tm-empty">加载中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="tm-panel tm-playback-panel">
+                <div class="tm-panel-header">
+                    <h2 id="tmCurrentSession">选择一个会话开始回放</h2>
+                    <span id="tmMeta"></span>
+                </div>
+
+                <div class="tm-controls">
+                    <button id="tmPlayBtn" class="tm-btn" disabled>播放</button>
+                    <button id="tmPauseBtn" class="tm-btn" disabled>暂停</button>
+                    <button id="tmResetBtn" class="tm-btn" disabled>重置</button>
+                    <label>
+                        倍速
+                        <select id="tmSpeed" disabled>
+                            <option value="0.5">0.5x</option>
+                            <option value="1" selected>1x</option>
+                            <option value="2">2x</option>
+                            <option value="4">4x</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div class="tm-slider-wrap">
+                    <input id="tmSlider" type="range" min="0" max="0" value="0" disabled>
+                    <div class="tm-slider-meta">
+                        <span id="tmProgress">0 / 0</span>
+                        <span id="tmCurrentTime">--</span>
+                    </div>
+                </div>
+
+                <pre id="tmScreen" class="tm-screen">等待加载回放数据...</pre>
+            </section>
+        </main>
+    </div>
+    <script src="/static/js/time-machine.js?v=20260709b"></script>
+</body>
+</html>

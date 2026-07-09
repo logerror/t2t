@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>War Room</title>
+    <link rel="stylesheet" href="/static/css/fontgoogle.css?v=20260709b">
+    <link rel="stylesheet" href="/static/css/war-room.css?v=20260709b">
+</head>
+<body>
+    <div class="wr-page">
+        <header class="wr-header">
+            <div>
+                <h1>战情室模式</h1>
+                <p>多主机分屏联动，支持一键广播命令</p>
+            </div>
+            <div class="wr-actions">
+                <a class="wr-link" href="/">返回首页</a>
+                <button id="wrRefreshBtn" class="wr-btn">刷新 Agents</button>
+            </div>
+        </header>
+
+        <main class="wr-main">
+            <aside class="wr-panel wr-agents-panel">
+                <div class="wr-panel-header">
+                    <h2>选择主机</h2>
+                    <span id="wrAgentCount">0 台在线</span>
+                </div>
+                <div id="wrAgentList" class="wr-agent-list">
+                    <div class="wr-empty">加载中...</div>
+                </div>
+                <button id="wrOpenBtn" class="wr-btn wr-open-btn">打开分屏</button>
+            </aside>
+
+            <section class="wr-panel wr-room-panel">
+                <div class="wr-panel-header">
+                    <h2>战情室终端</h2>
+                </div>
+
+                <div class="wr-broadcast-bar">
+                    <input id="wrBroadcastInput" type="text" placeholder="输入要广播的命令，例如: uptime">
+                    <button id="wrBroadcastBtn" class="wr-btn">广播命令</button>
+                </div>
+
+                <div id="wrRoomGrid" class="wr-room-grid">
+                    <div class="wr-empty">先在左侧选择主机并打开分屏</div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="/static/js/war-room.js?v=20260709b"></script>
+</body>
+</html>

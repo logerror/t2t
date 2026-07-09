@@ -1,9 +1,17 @@
 package svcconstants
 
+import "os"
+
 const (
-	AgentServerWsSchema   = "ws"
-	AgentServerHttpSchema = "http"
-	AgentServerHost       = "localhost:9002"
+	defaultAgentServerWsSchema   = "ws"
+	defaultAgentServerHttpSchema = "http"
+	defaultAgentServerHost       = "localhost:9002"
+)
+
+var (
+	AgentServerWsSchema   = getEnv("T2T_SERVER_WS_SCHEMA", defaultAgentServerWsSchema)
+	AgentServerHttpSchema = getEnv("T2T_SERVER_HTTP_SCHEMA", defaultAgentServerHttpSchema)
+	AgentServerHost       = getEnv("T2T_SERVER_HOST", defaultAgentServerHost)
 )
 
 const (
@@ -15,3 +23,11 @@ const (
 
 	JWTSecret = "t2t-secret"
 )
+
+func getEnv(key, fallback string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return fallback
+	}
+	return value
+}

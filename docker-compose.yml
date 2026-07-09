@@ -1,0 +1,41 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        TARGET: server
+    ports:
+      - "9002:9002"
+    volumes:
+      - ./cmd/server/config.yaml:/app/config.yaml:ro
+      - t2t_commands:/tmp/t2t/commands
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:9002/version >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped
+
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        TARGET: agent
+    depends_on:
+      server:
+        condition: service_healthy
+    environment:
+      T2T_SERVER_HOST: server:9002
+      T2T_SERVER_WS_SCHEMA: ws
+      T2T_SERVER_HTTP_SCHEMA: http
+    volumes:
+      - t2t_commands:/tmp/t2t/commands
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
+volumes:
+  t2t_commands:

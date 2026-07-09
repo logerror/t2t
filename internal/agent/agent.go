@@ -30,6 +30,9 @@ type Agent struct {
 	isConnected bool
 	exitChan    chan struct{}
 	mutex       sync.Mutex
+
+	// 命令监控
+	shellMonitor *ShellMonitor
 }
 
 func NewAgent(ws *websocket.Conn, terminal Terminal, hostTag, clientId string) *Agent {
@@ -43,6 +46,15 @@ func NewAgent(ws *websocket.Conn, terminal Terminal, hostTag, clientId string) *
 }
 
 func (a *Agent) Start(ctx context.Context) error {
+	// 初始化命令监控器
+	a.shellMonitor = NewShellMonitor(a.hostTag, a.clientId, "unknown")
+
+	// 启动命令监控
+	a.shellMonitor.Start()
+	if err := a.terminal.StartShell(); err != nil {
+		return fmt.Errorf("shell 启动失败: %v", err)
+	}
+
 	// 版本检查
 	if err := a.checkForUpdates(); err != nil {
 		log.Printf("版本检查失败: %v", err)
@@ -164,6 +176,7 @@ func (a *Agent) wsToPty(ctx context.Context) {
 		default:
 			ws := a.ws
 			if ws == nil {
+				time.Sleep(100 * time.Millisecond)
 				continue
 			}
 			messageType, data, err := ws.ReadMessage()
@@ -220,6 +233,12 @@ func (a *Agent) handleSpecialCommand(input []byte) bool {
 
 func (a *Agent) Close() {
 	close(a.exitChan)
+
+	// 停止命令监控
+	if a.shellMonitor != nil {
+		a.shellMonitor.Stop()
+	}
+
 	a.terminal.Close()
 	if a.ws != nil {
 		a.ws.Close()

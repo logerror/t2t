@@ -74,13 +74,18 @@ func HandleTerminalWS(w http.ResponseWriter, r *http.Request) {
 
 	// 获取对应的agent连接
 	tag := fmt.Sprintf("%s-%s", hostTag, clientId)
-
-	// 优雅清理：defer在webConn.Close()之前，确保wg.Wait()后执行
-	defer func() {
-		if c, ok := connManager.Clients[tag]; ok {
+	clearClientInfo := func() {
+		connManager.Mutex.Lock()
+		if c, ok := connManager.Clients[tag]; ok && c != nil {
 			c.ClientUser = ""
 			c.ClientVersion = ""
 		}
+		connManager.Mutex.Unlock()
+	}
+
+	// 优雅清理：defer在webConn.Close()之前，确保wg.Wait()后执行
+	defer func() {
+		clearClientInfo()
 		webConn.WriteMessage(websocket.TextMessage, []byte("\x1b[31m由于网络较差或agent端已退出，该链接已不可用\x1b[0m\r\n"))
 		easylog.Info("Web terminal connection closed",
 			zap.String("hostTag", hostTag),
@@ -95,8 +100,10 @@ func HandleTerminalWS(w http.ResponseWriter, r *http.Request) {
 	if clientUser == "" {
 		clientUser = ip
 	}
+
+	connManager.Mutex.Lock()
 	c, exist := connManager.Clients[tag]
-	if exist {
+	if exist && c != nil {
 		c.Ws = webConn
 		c.ClientUser = clientUser
 		c.ClientVersion = "Web Terminal"
@@ -109,9 +116,9 @@ func HandleTerminalWS(w http.ResponseWriter, r *http.Request) {
 			ClientVersion: "Web Terminal",
 		}
 	}
-
 	agentConn, exists := connManager.Agents[tag]
-	if !exists || agentConn == nil {
+	connManager.Mutex.Unlock()
+	if !exists || agentConn == nil || agentConn.Ws == nil {
 		webConn.WriteMessage(websocket.TextMessage, []byte("\x1b[31mAgent connection not found\x1b[0m\r\n"))
 		return
 	}
@@ -150,11 +157,7 @@ func HandleTerminalWS(w http.ResponseWriter, r *http.Request) {
 					easylog.Error("Error reading from web terminal",
 						zap.String("tag", tag),
 						zap.Error(err))
-					// 立即清空用户信息
-					if c, ok := connManager.Clients[tag]; ok {
-						c.ClientUser = ""
-						c.ClientVersion = ""
-					}
+					clearClientInfo()
 					return
 				}
 				// 检查是否是调整大小的消息
@@ -210,10 +213,7 @@ func HandleTerminalWS(w http.ResponseWriter, r *http.Request) {
 	wg.Wait()
 
 	// 资源清理
-	if c, ok := connManager.Clients[tag]; ok {
-		c.ClientUser = ""
-		c.ClientVersion = ""
-	}
+	clearClientInfo()
 	easylog.Info("Web terminal connection closed",
 		zap.String("hostTag", hostTag),
 		zap.String("clientId", clientId))

@@ -243,6 +243,29 @@ h1::after {
     box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
 }
 
+.mode-btn {
+    border: 1px solid rgba(99, 102, 241, 0.35);
+    background: rgba(255, 255, 255, 0.9);
+    color: #4f46e5;
+    border-radius: 1rem;
+    padding: 0.75rem 1.2rem;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+}
+
+.mode-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(79, 70, 229, 0.2);
+}
+
+.mode-btn-secondary {
+    color: #0891b2;
+    border-color: rgba(8, 145, 178, 0.35);
+}
+
 .refresh-icon {
     width: 1.25rem;
     height: 1.25rem;
@@ -588,26 +611,48 @@ tr:nth-child(even) {
     }
 }
 
-.search-input {
-    padding: 0.75rem 1.5rem;
-    border: 2px solid rgba(226, 232, 240, 0.5);
-    border-radius: 1rem;
-    font-size: 1.05rem;
-    margin-left: 1rem;
-    min-width: 250px;
-    outline: none;
+/* 搜索框样式 */
+.search-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    max-width: 400px;
+    margin-right: 16px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    width: 18px;
+    height: 18px;
+    color: var(--text-secondary);
     transition: all 0.3s ease;
-    background: rgba(248, 250, 252, 0.9);
+    z-index: 1;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 12px 12px 40px;
+    background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
     color: var(--text-primary);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.3s ease;
 }
 
 .search-input:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 8px 25px rgba(0, 123, 255, 0.15);
-    transform: translateY(-1px);
+    outline: none;
+    border-color: rgba(102, 126, 234, 0.5);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.search-input:focus + .search-icon {
+    color: #667eea;
+    transform: scale(1.1);
 }
 
 .search-input::placeholder {
@@ -624,6 +669,41 @@ tr:nth-child(even) {
     border-radius: 50%;
     border-top-color: #fff;
     animation: spin 1s ease-in-out infinite;
+}
+
+/* 加载状态样式 */
+.loading-state {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.loading-icon {
+    width: 48px;
+    height: 48px;
+    color: #667eea;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-container span {
+    color: var(--text-secondary);
+    font-size: 16px;
+    font-weight: 500;
 }
 
 /* 响应式设计 */
@@ -692,4 +772,122 @@ tr:nth-child(even) {
 
 ::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(135deg, #5a67d8 0%, #667eea 100%);
+} 
+
+/* 标题图标样式 */
+.title-icon {
+    width: 32px;
+    height: 32px;
+    margin-right: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 2px 4px rgba(102, 126, 234, 0.3));
+    animation: iconGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes iconGlow {
+    0% {
+        filter: drop-shadow(0 2px 4px rgba(102, 126, 234, 0.3));
+    }
+    100% {
+        filter: drop-shadow(0 4px 8px rgba(102, 126, 234, 0.6));
+    }
+}
+
+/* 刷新图标样式 */
+.refresh-icon {
+    width: 18px;
+    height: 18px;
+    transition: transform 0.3s ease;
+}
+
+.refresh-btn:hover .refresh-icon {
+    transform: rotate(180deg);
+}
+
+.refresh-btn:active .refresh-icon {
+    transform: rotate(360deg);
+}
+
+/* 操作按钮图标样式 */
+.action-btn svg {
+    transition: all 0.3s ease;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.copy-btn:hover svg {
+    transform: scale(1.1);
+    filter: drop-shadow(0 2px 4px rgba(102, 126, 234, 0.4));
+}
+
+.connect-btn:hover svg {
+    transform: scale(1.1);
+    filter: drop-shadow(0 2px 4px rgba(118, 75, 162, 0.4));
+}
+
+/* 复制成功时的图标动画 */
+.copy-btn.copied svg {
+    animation: copySuccess 0.6s ease-in-out;
+}
+
+@keyframes copySuccess {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+    }
+} 
+
+/* 统计图标样式 */
+.stat-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 1px 2px rgba(102, 126, 234, 0.2));
+    transition: all 0.3s ease;
+}
+
+.stat-item:hover .stat-icon {
+    transform: scale(1.1);
+    filter: drop-shadow(0 2px 4px rgba(102, 126, 234, 0.4));
+}
+
+/* 统计项布局调整 */
+.stat-item {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin: 0 8px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.stat-item:hover::before {
+    left: 100%;
 } 

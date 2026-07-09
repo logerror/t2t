@@ -3,6 +3,7 @@ package manager
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -52,12 +53,8 @@ func NewConnectionManager() *ConnectionManager {
 }
 
 func (cm *ConnectionManager) HandleAgentConnection(ws *websocket.Conn, hostTag, clientId string, r *http.Request) {
-	cm.Mutex.Lock()
-	defer cm.Mutex.Unlock()
-
 	tag := fmt.Sprintf("%s-%s", hostTag, clientId)
 
-	// 更新 Agent 连接
 	agentConn := &AgentConnection{
 		Ws:           ws,
 		uuid:         uuid.New().String(),
@@ -69,8 +66,12 @@ func (cm *ConnectionManager) HandleAgentConnection(ws *websocket.Conn, hostTag, 
 		AgentVersion: r.Header.Get(svcconstants.WsT2TAgentVersionHeader),
 	}
 
-	// 如果存在旧连接，关闭它
-	if oldAgent, exists := cm.Agents[tag]; exists {
+	cm.Mutex.Lock()
+	oldAgent, exists := cm.Agents[tag]
+	cm.Agents[tag] = agentConn
+	cm.Mutex.Unlock()
+
+	if exists && oldAgent != nil {
 		easylog.Info("Closing old agent connection",
 			zap.String("old uuid", oldAgent.uuid),
 			zap.String("hostTag", hostTag),
@@ -78,7 +79,6 @@ func (cm *ConnectionManager) HandleAgentConnection(ws *websocket.Conn, hostTag, 
 		safeCloseWS(oldAgent.Ws)
 	}
 
-	cm.Agents[tag] = agentConn
 	easylog.Info("Agent connected",
 		zap.String("agent uuid", agentConn.uuid),
 		zap.String("hostTag", hostTag),
@@ -96,11 +96,11 @@ func (cm *ConnectionManager) HandleAgentConnection(ws *websocket.Conn, hostTag, 
 
 // 处理 Client 连接
 func (cm *ConnectionManager) HandleClientConnection(ws *websocket.Conn, hostTag, clientId string, r *http.Request) error {
-	cm.Mutex.Lock()
-	defer cm.Mutex.Unlock()
-
 	tag := fmt.Sprintf("%s-%s", hostTag, clientId)
+
+	cm.Mutex.RLock()
 	agentConn, exists := cm.Agents[tag]
+	cm.Mutex.RUnlock()
 	if !exists {
 		return fmt.Errorf("no agent connection available for %s", tag)
 	}
@@ -108,7 +108,7 @@ func (cm *ConnectionManager) HandleClientConnection(ws *websocket.Conn, hostTag,
 	// 验证 agent 连接是否活跃
 	if err := cm.CheckConnection(agentConn.Ws); err != nil {
 		if !websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
-			delete(cm.Agents, tag)
+			cm.RemoveAgent(hostTag, clientId)
 		}
 		return fmt.Errorf("agent connection is not active: %v", err)
 	}
@@ -133,18 +133,18 @@ func (cm *ConnectionManager) HandleClientConnection(ws *websocket.Conn, hostTag,
 		)
 	}
 
-	if oldClient, exists := cm.Clients[tag]; exists {
-		if oldClient.Ws != nil {
-			easylog.Info("Closing old client connection",
-				zap.String("uuid", oldClient.uuid),
-				zap.String("hostTag", hostTag),
-				zap.String("clientId", clientId))
-			safeCloseWS(oldClient.Ws)
-		}
-	}
-
-	// 添加到客户端列表
+	cm.Mutex.Lock()
+	oldClient := cm.Clients[tag]
 	cm.Clients[tag] = clientConn
+	cm.Mutex.Unlock()
+
+	if oldClient != nil && oldClient.Ws != nil {
+		easylog.Info("Closing old client connection",
+			zap.String("uuid", oldClient.uuid),
+			zap.String("hostTag", hostTag),
+			zap.String("clientId", clientId))
+		safeCloseWS(oldClient.Ws)
+	}
 
 	easylog.Info("Client connected",
 		zap.String("uuid", clientConn.uuid),
@@ -321,27 +321,29 @@ func (cm *ConnectionManager) CheckConnection(ws *websocket.Conn) error {
 
 // 添加新的检查连接方法
 func (cm *ConnectionManager) CheckAgentConnection(hostTag, clientId string) error {
-	cm.Mutex.RLock()
-	defer cm.Mutex.RUnlock()
-
 	tag := fmt.Sprintf("%s-%s", hostTag, clientId)
+
+	cm.Mutex.RLock()
 	conn, exists := cm.Agents[tag]
+	cm.Mutex.RUnlock()
 	if !exists {
 		return fmt.Errorf("agent not found")
 	}
+	if conn == nil || conn.Ws == nil {
+		return fmt.Errorf("agent websocket is nil")
+	}
 
 	var err error
-	// 尝试发送 ping 消息
 	for i := 0; i < 3; i++ {
 		err = conn.Ws.WriteMessage(websocket.PingMessage, nil)
-		if err != nil {
-			easylog.Warn("Error sending ping message to agent",
-				zap.String("hostTag", hostTag),
-				zap.String("clientId", clientId),
-				zap.Int("attempt", i),
-				zap.Error(err))
-			continue
+		if err == nil {
+			return nil
 		}
+		easylog.Warn("Error sending ping message to agent",
+			zap.String("hostTag", hostTag),
+			zap.String("clientId", clientId),
+			zap.Int("attempt", i+1),
+			zap.Error(err))
 	}
 
 	if err != nil {
@@ -354,23 +356,27 @@ func (cm *ConnectionManager) CheckAgentConnection(hostTag, clientId string) erro
 // 添加 RemoveAgent 方法到 ConnectionManager
 func (cm *ConnectionManager) RemoveAgent(hostTag, clientId string) {
 	tag := fmt.Sprintf("%s-%s", hostTag, clientId)
-	if conn, exists := cm.Agents[tag]; exists {
-		err := conn.Ws.Close()
-		if err != nil {
-			easylog.Info("failed to close agent ws", zap.String("hostTag", hostTag), zap.String("clientId", clientId))
-		}
+
+	cm.Mutex.Lock()
+	agentConn, hasAgent := cm.Agents[tag]
+	if hasAgent {
 		delete(cm.Agents, tag)
+	}
+
+	clientConn, hasClient := cm.Clients[tag]
+	if hasClient {
+		delete(cm.Clients, tag)
+	}
+	cm.Mutex.Unlock()
+
+	if hasAgent && agentConn != nil && agentConn.Ws != nil {
+		safeCloseWS(agentConn.Ws)
 		easylog.Info("Agent removed", zap.String("hostTag", hostTag), zap.String("clientId", clientId))
 	}
 
-	// 关闭所有相关的客户端连接
-	if c, exists := cm.Clients[tag]; exists {
-		err := c.Ws.Close()
-		if err != nil {
-			easylog.Info("failed to close client ws", zap.String("hostTag", hostTag), zap.String("clientId", clientId))
-		}
-		delete(cm.Clients, tag)
-		easylog.Info("Client removed", zap.String("hostTag", hostTag), zap.String("clientId", clientId), zap.String("clientUuid", c.uuid))
+	if hasClient && clientConn != nil && clientConn.Ws != nil {
+		safeCloseWS(clientConn.Ws)
+		easylog.Info("Client removed", zap.String("hostTag", hostTag), zap.String("clientId", clientId), zap.String("clientUuid", clientConn.uuid))
 	}
 }
 
@@ -406,20 +412,12 @@ func (cm *ConnectionManager) StartHealthCheck(interval time.Duration) {
 			}
 			cm.Mutex.RUnlock()
 			for _, tag := range tags {
-				hostClient := tag
-				parts := []rune(hostClient)
-				sep := -1
-				for i, c := range parts {
-					if c == '-' {
-						sep = i
-						break
-					}
-				}
-				if sep == -1 {
+				sep := strings.LastIndex(tag, "-")
+				if sep == -1 || sep == len(tag)-1 {
 					continue
 				}
-				hostTag := string(parts[:sep])
-				clientId := string(parts[sep+1:])
+				hostTag := tag[:sep]
+				clientId := tag[sep+1:]
 				if err := cm.CheckAgentConnection(hostTag, clientId); err != nil {
 					easylog.Info("HealthCheck: remove dead agent", zap.String("hostTag", hostTag), zap.String("clientId", clientId))
 					cm.RemoveAgent(hostTag, clientId)

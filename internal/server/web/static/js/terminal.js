@@ -80,6 +80,30 @@ if (!hostTag || !clientId) {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const socket = new WebSocket(`${protocol}//${window.location.host}/terminal/ws?hostTag=${hostTag}&clientId=${clientId}`);
 
+    function sendExternalCommand(rawCommand) {
+        if (typeof rawCommand !== 'string') {
+            return;
+        }
+        const command = rawCommand.endsWith('\n') ? rawCommand : `${rawCommand}\n`;
+        if (socket.readyState !== WebSocket.OPEN) {
+            term.write('\r\n\x1b[33m[War Room] 当前连接未就绪，命令未发送\x1b[0m\r\n');
+            return;
+        }
+        socket.send(command);
+        term.write(`\r\n\x1b[36m[War Room] 已广播命令: ${command.trim()}\x1b[0m\r\n`);
+    }
+
+    window.addEventListener('message', (event) => {
+        if (event.origin !== window.location.origin) {
+            return;
+        }
+        const data = event.data;
+        if (!data || data.type !== 't2t:broadcastCommand') {
+            return;
+        }
+        sendExternalCommand(data.command);
+    });
+
     
     // 连接成功时的效果
     socket.onopen = () => {

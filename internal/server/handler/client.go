@@ -168,7 +168,7 @@ func HandleAttach(wsAttach *xwebsocket.Conn) {
 	optionAgent := OptionAgents[tag]
 	if optionAgent != nil {
 		if optionAgent.ClientUser != "" {
-			wsAttach.Write([]byte(fmt.Sprintf("Warning: current agent is connected by", optionAgent.ClientUser)))
+			wsAttach.Write([]byte(fmt.Sprintf("Warning: current agent is connected by %s", optionAgent.ClientUser)))
 		}
 		optionAgent.ClientUser = clientUser
 		optionAgent.ClientVersion = clientVersion
@@ -176,7 +176,7 @@ func HandleAttach(wsAttach *xwebsocket.Conn) {
 	}
 
 	if clientVersion != versionutil.GetCurrentClientVersion() {
-		wsAttach.Write([]byte(fmt.Sprintf("你的Client版本太旧了，快按照文档更新一下吧, 最新版本:", versionutil.GetCurrentClientVersion())))
+		wsAttach.Write([]byte(fmt.Sprintf("你的Client版本太旧了，快按照文档更新一下吧, 最新版本: %s", versionutil.GetCurrentClientVersion())))
 	}
 
 	logPathDir := fmt.Sprintf("/tmp/server_cache/%s/%s", time.Now().Format("2006_01_02"), hostTag)
@@ -335,6 +335,7 @@ func ListAgents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	connManager.Mutex.RLock()
 	agentList := make([]agent.Agent, 0, len(connManager.Agents))
 	for _, conn := range connManager.Agents {
 		var clientUser, clientVersion string
@@ -354,10 +355,16 @@ func ListAgents(w http.ResponseWriter, r *http.Request) {
 			ClientVersion: clientVersion,
 		})
 	}
+	connManager.Mutex.RUnlock()
 
+	mutex.RLock()
 	for _, conn := range OptionAgents {
+		if conn == nil {
+			continue
+		}
 		agentList = append(agentList, *conn)
 	}
+	mutex.RUnlock()
 
 	sort.Slice(agentList, func(i, j int) bool {
 		return agentList[i].CreatedAt.String() > agentList[j].CreatedAt.String()
@@ -414,6 +421,8 @@ func AgentOption(w http.ResponseWriter, r *http.Request) {
 		hostTag, clientId := matches[1], matches[2]
 		tag := fmt.Sprintf("%s-%s", hostTag, clientId)
 		var optionAgent agent.Agent
+
+		connManager.Mutex.RLock()
 		v2Agent, exist := connManager.Agents[tag]
 		if exist {
 			optionAgent = agent.Agent{
@@ -423,11 +432,14 @@ func AgentOption(w http.ResponseWriter, r *http.Request) {
 				AgentVersion: v2Agent.AgentVersion,
 			}
 		}
+		connManager.Mutex.RUnlock()
 
-		v1Agent, exist := OptionAgents[fmt.Sprintf("%s-%s", hostTag, clientId)]
+		mutex.RLock()
+		v1Agent, exist := OptionAgents[tag]
 		if exist {
 			optionAgent = *v1Agent
 		}
+		mutex.RUnlock()
 
 		response := &common.Response{
 			Code: http.StatusOK,
@@ -484,16 +496,10 @@ func CheckConnection(w http.ResponseWriter, r *http.Request) {
 	}
 
 	hostTag, clientId := matches[1], matches[2]
-	deletedAgents := []string{}
-
-	available := false
+	available := true
 	if err := connManager.CheckAgentConnection(hostTag, clientId); err != nil {
-		tag := fmt.Sprintf("%s-%s", hostTag, clientId)
-		deletedAgents = append(deletedAgents, tag)
-		connManager.RemoveAgent(hostTag, clientId)
-
+		available = false
 	}
-	available = true
 
 	easylog.Info("Checking connection status",
 		zap.String("hostTag", hostTag),
@@ -516,31 +522,68 @@ func CheckConnections(w http.ResponseWriter, r *http.Request) {
 	}
 
 	deletedAgents := []string{}
-	agents := connManager.Agents
-	for tag, currentAgent := range agents {
-		if err := connManager.CheckAgentConnection(currentAgent.HostTag, currentAgent.ClientId); err != nil {
-			deletedAgents = append(deletedAgents, tag)
-			connManager.RemoveAgent(currentAgent.HostTag, currentAgent.ClientId)
+
+	type managedAgent struct {
+		tag      string
+		hostTag  string
+		clientId string
+	}
+	connManager.Mutex.RLock()
+	agents := make([]managedAgent, 0, len(connManager.Agents))
+	for tag, currentAgent := range connManager.Agents {
+		agents = append(agents, managedAgent{
+			tag:      tag,
+			hostTag:  currentAgent.HostTag,
+			clientId: currentAgent.ClientId,
+		})
+	}
+	connManager.Mutex.RUnlock()
+
+	for _, currentAgent := range agents {
+		if err := connManager.CheckAgentConnection(currentAgent.hostTag, currentAgent.clientId); err != nil {
+			deletedAgents = append(deletedAgents, currentAgent.tag)
 		}
 	}
 
+	type legacyAgent struct {
+		key        string
+		hostTag    string
+		clientId   string
+		clientUser string
+		conn       *xwebsocket.Conn
+	}
+	mutex.RLock()
+	legacyAgents := make([]legacyAgent, 0, len(OptionAgents))
 	for key, optionAgent := range OptionAgents {
-		easylog.Info("Check agent connection", zap.String("Host", key), zap.String("ClientUser", optionAgent.ClientUser))
-		if optionAgent.ClientUser != "" {
+		if optionAgent == nil {
 			continue
 		}
-		conn, ok := Clients[key]
-		if !ok {
+		legacyAgents = append(legacyAgents, legacyAgent{
+			key:        key,
+			hostTag:    optionAgent.HostTag,
+			clientId:   optionAgent.ClientId,
+			clientUser: optionAgent.ClientUser,
+			conn:       Clients[key],
+		})
+	}
+	mutex.RUnlock()
+
+	for _, optionAgent := range legacyAgents {
+		easylog.Info("Check agent connection", zap.String("Host", optionAgent.key), zap.String("ClientUser", optionAgent.clientUser))
+		if optionAgent.clientUser != "" {
+			continue
+		}
+		if optionAgent.conn == nil {
 			continue
 		}
 
 		var checkErr error
 		for i := 0; i < 3; i++ {
-			_, checkErr = conn.Write([]byte(""))
+			_, checkErr = optionAgent.conn.Write([]byte(""))
 			if checkErr != nil {
 				easylog.Warn("Error sending ping message to agent",
-					zap.String("Host", key),
-					zap.Int("attempt", i),
+					zap.String("Host", optionAgent.key),
+					zap.Int("attempt", i+1),
 					zap.Error(checkErr))
 				continue
 			} else {
@@ -549,8 +592,8 @@ func CheckConnections(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if checkErr != nil {
-			RemoveAgent(optionAgent.HostTag, optionAgent.ClientId)
-			deletedAgents = append(deletedAgents, key)
+			RemoveAgent(optionAgent.hostTag, optionAgent.clientId)
+			deletedAgents = append(deletedAgents, optionAgent.key)
 		}
 	}
 
